@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<!-- admin/index.html -->
+<!-- Developer: Marcus Daley -->
+<!-- Date: 2026-04-20 -->
+<!-- Purpose: VetAssist admin dashboard — moderation queue, compliance monitor, platform metrics, VA reg update management -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>VetAssist Admin — Command Center</title>
+
+  <!-- Stars & Field design system typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Source+Serif+4:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    /* ── Design tokens — Stars & Field palette ── */
+    :root {
+      --color-field-black:     #0D0F14;
+      --color-aged-canvas:     #1C2033;
+      --color-old-glory-red:   #B22234;
+      --color-text-primary:    #EDF0F4;
+      --color-text-secondary:  #8A96AA;
+      --color-star-white:      #F5F5F5;
+      --color-field-blue:      #1A2744;
+      --color-stripe-red-muted:#7A1A1A;
+      --color-military-olive:  #4A5240;
+      --color-border:          #2A3149;
+      --color-crisis-bg:       #8B0000;
+      --color-score-low:       #B22234;
+      --color-score-mid:       #C8A135;
+      --color-score-high:      #4A7C59;
+      --color-surface-hover:   #222640;
+
+      --font-heading: 'Oswald', Georgia, serif;
+      --font-body:    'Source Serif 4', Georgia, serif;
+      --font-mono:    'JetBrains Mono', monospace;
+
+      --radius-card:  4px;
+      --gutter:       24px;
+      --section-gap:  48px;
+    }
+
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html {
+      font-size: 18px;
+      background: var(--color-field-black);
+      color: var(--color-text-primary);
+      font-family: var(--font-body);
+      line-height: 1.6;
+    }
+
+    /* ── Flag texture — felt, not seen ── */
+    body {
+      min-height: 100vh;
+      background-image:
+        repeating-linear-gradient(
+          180deg,
+          rgba(122, 26, 26, 0.04) 0px,
+          rgba(122, 26, 26, 0.04) 18px,
+          transparent 18px,
+          transparent 36px
+        );
+    }
+
+    /* ── Typography scale ── */
+    h1 { font-family: var(--font-heading); font-size: 2.33rem; font-weight: 700; line-height: 1.1; letter-spacing: 0.02em; }
+    h2 { font-family: var(--font-heading); font-size: 1.78rem; font-weight: 600; line-height: 1.15; letter-spacing: 0.02em; }
+    h3 { font-family: var(--font-heading); font-size: 1.33rem; font-weight: 600; line-height: 1.2; }
+    h4 { font-family: var(--font-heading); font-size: 1rem;    font-weight: 600; line-height: 1.3; }
+
+    .label {
+      font-family: var(--font-heading);
+      font-size: 0.61rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-text-secondary);
+    }
+
+    .mono { font-family: var(--font-mono); }
+
+    /* ── Crisis banner — always on top ── */
+    .crisis-banner {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      height: 48px;
+      background: var(--color-crisis-bg);
+      border-left: 4px solid var(--color-old-glory-red);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      text-decoration: none;
+      animation: crisis-pulse 3s ease-in-out infinite;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .crisis-banner { animation: crisis-pulse 3s ease-in-out infinite; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .crisis-banner { animation: none; }
+    }
+
+    @keyframes crisis-pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.88; }
+    }
+
+    .crisis-banner__text {
+      font-family: var(--font-heading);
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #FFFFFF;
+    }
+
+    .crisis-banner__star {
+      color: #FFFFFF;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    /* ── Shell layout ── */
+    .shell {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      min-height: calc(100vh - 48px);
+    }
+
+    /* ── Sidebar nav ── */
+    .sidebar {
+      background: var(--color-field-black);
+      border-right: 1px solid var(--color-aged-canvas);
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 48px;
+      height: calc(100vh - 48px);
+      overflow-y: auto;
+    }
+
+    .sidebar__logo {
+      height: 64px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .sidebar__logo-star {
+      color: var(--color-old-glory-red);
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .sidebar__logo-text { display: flex; flex-direction: column; }
+
+    .sidebar__logo-name {
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--color-star-white);
+      line-height: 1.1;
+    }
+
+    .sidebar__logo-sub {
+      font-family: var(--font-body);
+      font-size: 0.67rem;
+      color: var(--color-text-secondary);
+    }
+
+    .sidebar__section-label {
+      padding: 20px 16px 6px;
+      font-family: var(--font-heading);
+      font-size: 0.56rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-border);
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      font-family: var(--font-heading);
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: color 150ms, background 150ms, border-color 150ms;
+      cursor: pointer;
+      background: none;
+      border-right: none;
+      border-top: none;
+      border-bottom: none;
+      width: 100%;
+      text-align: left;
+    }
+
+    .nav-item:hover {
+      color: var(--color-text-primary);
+      background: var(--color-surface-hover);
+    }
+
+    .nav-item--active {
+      color: var(--color-text-primary);
+      background: var(--color-aged-canvas);
+      border-left-color: var(--color-old-glory-red);
+    }
+
+    .nav-item__badge {
+      margin-left: auto;
+      background: var(--color-old-glory-red);
+      color: #fff;
+      font-family: var(--font-heading);
+      font-size: 0.56rem;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 2px;
+      letter-spacing: 0.04em;
+    }
+
+    .sidebar__flag-watermark {
+      margin-top: auto;
+      padding: 16px;
+      opacity: 0.03;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    /* ── Main content ── */
+    .main {
+      padding: 40px;
+      max-width: 900px;
+    }
+
+    .page-header {
+      margin-bottom: 32px;
+      padding-bottom: 20px;
+      border-bottom: 3px solid var(--color-old-glory-red);
+    }
+
+    .page-header__eyebrow {
+      font-family: var(--font-heading);
+      font-size: 0.67rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-old-glory-red);
+      margin-bottom: 6px;
+    }
+
+    .page-header__title { color: var(--color-star-white); }
+
+    .page-header__meta {
+      margin-top: 6px;
+      font-size: 0.78rem;
+      color: var(--color-text-secondary);
+    }
+
+    /* ── Stat grid ── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: var(--gutter);
+      margin-bottom: var(--section-gap);
+    }
+
+    .stat-card {
+      background: var(--color-aged-canvas);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-card);
+      padding: 20px;
+      opacity: 0;
+      transform: translateY(8px);
+      animation: card-enter 200ms ease-out forwards;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .stat-card { opacity: 1; transform: none; animation: none; }
+    }
+
+    .stat-card:nth-child(1) { animation-delay: 0ms; }
+    .stat-card:nth-child(2) { animation-delay: 50ms; }
+    .stat-card:nth-child(3) { animation-delay: 100ms; }
+    .stat-card:nth-child(4) { animation-delay: 150ms; }
+    .stat-card:nth-child(5) { animation-delay: 200ms; }
+    .stat-card:nth-child(6) { animation-delay: 250ms; }
+
+    @keyframes card-enter {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .stat-card--alert { border-color: var(--color-old-glory-red); }
+    .stat-card--success { border-color: var(--color-score-high); }
+
+    .stat-card__value {
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--color-star-white);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .stat-card__value--alert  { color: var(--color-score-low); }
+    .stat-card__value--gold   { color: var(--color-score-mid); }
+    .stat-card__value--green  { color: var(--color-score-high); }
+
+    .stat-card__label { font-size: 0.78rem; color: var(--color-text-secondary); margin-bottom: 12px; }
+
+    .stat-card__trend {
+      font-family: var(--font-heading);
+      font-size: 0.61rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .stat-card__trend--up    { color: var(--color-score-high); }
+    .stat-card__trend--down  { color: var(--color-score-low); }
+    .stat-card__trend--flat  { color: var(--color-text-secondary); }
+
+    /* ── Section separator ── */
+    .stripe-divider {
+      height: 3px;
+      background: repeating-linear-gradient(
+        90deg,
+        var(--color-old-glory-red) 0px,
+        var(--color-old-glory-red) 40px,
+        transparent 40px,
+        transparent 60px
+      );
+      margin: var(--section-gap) 0;
+    }
+
+    /* ── Moderation queue ── */
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .section-header__title { color: var(--color-star-white); }
+
+    .badge {
+      font-family: var(--font-heading);
+      font-size: 0.56rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 2px;
+    }
+
+    .badge--red    { background: rgba(178, 34, 52, 0.2); color: var(--color-old-glory-red); border: 1px solid var(--color-old-glory-red); }
+    .badge--olive  { background: rgba(74, 82, 64, 0.3);  color: #7A9C6A; border: 1px solid var(--color-military-olive); }
+    .badge--gold   { background: rgba(200, 161, 53, 0.15); color: var(--color-score-mid);  border: 1px solid var(--color-score-mid); }
+    .badge--blue   { background: rgba(26, 39, 68, 0.6);  color: #6A8FCC; border: 1px solid var(--color-field-blue); }
+
+    .queue-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-card);
+      overflow: hidden;
+    }
+
+    .queue-table thead {
+      background: var(--color-field-black);
+    }
+
+    .queue-table th {
+      padding: 10px 16px;
+      font-family: var(--font-heading);
+      font-size: 0.61rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-text-secondary);
+      text-align: left;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .queue-table td {
+      padding: 14px 16px;
+      font-size: 0.89rem;
+      border-bottom: 1px solid var(--color-border);
+      vertical-align: middle;
+    }
+
+    .queue-table tbody tr {
+      background: var(--color-aged-canvas);
+      transition: background 150ms;
+    }
+
+    .queue-table tbody tr:hover { background: var(--color-surface-hover); }
+    .queue-table tbody tr:last-child td { border-bottom: none; }
+
+    .queue-table__flag {
+      font-size: 0.78rem;
+      color: var(--color-text-secondary);
+    }
+
+    .queue-table__id {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--color-text-secondary);
+    }
+
+    /* ── Action buttons ── */
+    .btn {
+      font-family: var(--font-heading);
+      font-size: 0.67rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 8px 16px;
+      border-radius: var(--radius-card);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: background 150ms, border-color 150ms, color 150ms;
+      min-height: 48px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn--primary {
+      background: var(--color-old-glory-red);
+      color: #FFFFFF;
+      border-color: var(--color-old-glory-red);
+    }
+    .btn--primary:hover { background: #8B0000; border-color: #8B0000; }
+
+    .btn--ghost {
+      background: transparent;
+      color: var(--color-text-secondary);
+      border-color: var(--color-border);
+    }
+    .btn--ghost:hover {
+      color: var(--color-text-primary);
+      border-color: var(--color-text-secondary);
+      background: var(--color-surface-hover);
+    }
+
+    .btn--approve {
+      background: rgba(74, 82, 64, 0.3);
+      color: #7A9C6A;
+      border-color: var(--color-military-olive);
+    }
+    .btn--approve:hover { background: rgba(74, 82, 64, 0.5); }
+
+    .btn--danger {
+      background: rgba(178, 34, 52, 0.15);
+      color: var(--color-old-glory-red);
+      border-color: var(--color-old-glory-red);
+    }
+    .btn--danger:hover { background: rgba(178, 34, 52, 0.3); }
+
+    .btn-row { display: flex; gap: 8px; }
+
+    /* ── Compliance log ── */
+    .log-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .log-item {
+      background: var(--color-aged-canvas);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-card);
+      padding: 12px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      border-left: 3px solid var(--color-border);
+      transition: border-left-color 150ms;
+    }
+
+    .log-item--crisis   { border-left-color: var(--color-old-glory-red); }
+    .log-item--pii      { border-left-color: var(--color-score-mid); }
+    .log-item--medical  { border-left-color: #6A8FCC; }
+    .log-item--passed   { border-left-color: var(--color-score-high); }
+
+    .log-item__icon { font-size: 16px; line-height: 1.5; flex-shrink: 0; }
+    .log-item__body { flex: 1; min-width: 0; }
+
+    .log-item__event {
+      font-family: var(--font-heading);
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--color-text-primary);
+    }
+
+    .log-item__meta {
+      margin-top: 2px;
+      font-size: 0.72rem;
+      color: var(--color-text-secondary);
+    }
+
+    .log-item__timestamp {
+      font-family: var(--font-mono);
+      font-size: 0.67rem;
+      color: var(--color-text-secondary);
+      flex-shrink: 0;
+      padding-top: 3px;
+    }
+
+    /* ── VA regulation update panel ── */
+    .update-card {
+      background: var(--color-aged-canvas);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-card);
+      padding: 20px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .update-card__cfr {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--color-old-glory-red);
+      background: rgba(178, 34, 52, 0.1);
+      border: 1px solid rgba(178, 34, 52, 0.3);
+      border-radius: 2px;
+      padding: 3px 8px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .update-card__body { flex: 1; }
+
+    .update-card__title {
+      font-family: var(--font-heading);
+      font-size: 0.89rem;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin-bottom: 4px;
+    }
+
+    .update-card__summary {
+      font-size: 0.83rem;
+      color: var(--color-text-secondary);
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+
+    /* ── Lockdown toggle ── */
+    .lockdown-panel {
+      background: var(--color-aged-canvas);
+      border: 1px solid var(--color-border);
+      border-left: 4px solid var(--color-old-glory-red);
+      border-radius: var(--radius-card);
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: var(--section-gap);
+    }
+
+    .lockdown-panel__info {}
+
+    .lockdown-panel__label {
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--color-star-white);
+    }
+
+    .lockdown-panel__desc {
+      font-size: 0.78rem;
+      color: var(--color-text-secondary);
+      margin-top: 4px;
+    }
+
+    /* ── Toggle switch ── */
+    .toggle-wrap { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+    .toggle-label {
+      font-family: var(--font-heading);
+      font-size: 0.67rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--color-text-secondary);
+    }
+
+    .toggle {
+      position: relative;
+      width: 52px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+
+    .toggle input { opacity: 0; width: 0; height: 0; }
+
+    .toggle__track {
+      position: absolute;
+      inset: 0;
+      background: var(--color-border);
+      border-radius: 14px;
+      cursor: pointer;
+      transition: background 150ms;
+    }
+
+    .toggle__track::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      left: 4px;
+      top: 4px;
+      background: var(--color-text-secondary);
+      border-radius: 50%;
+      transition: transform 150ms, background 150ms;
+    }
+
+    .toggle input:checked + .toggle__track { background: var(--color-old-glory-red); }
+    .toggle input:checked + .toggle__track::after {
+      transform: translateX(24px);
+      background: #FFFFFF;
+    }
+
+    .toggle input:focus-visible + .toggle__track {
+      outline: 2px solid var(--color-old-glory-red);
+      outline-offset: 2px;
+    }
+
+    /* ── PII audit note ── */
+    .audit-notice {
+      background: var(--color-field-blue);
+      border: 1px solid var(--color-border);
+      border-left: 3px solid #4A7C59;
+      border-radius: var(--radius-card);
+      padding: 14px 18px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: var(--section-gap);
+    }
+
+    .audit-notice__icon { font-size: 18px; flex-shrink: 0; line-height: 1.6; }
+
+    .audit-notice__text {
+      font-family: var(--font-body);
+      font-size: 0.78rem;
+      font-style: italic;
+      color: var(--color-text-secondary);
+      line-height: 1.5;
+    }
+
+    /* ── AI disclosure ── */
+    .ai-disclosure {
+      background: var(--color-field-blue);
+      border-left: 3px solid var(--color-military-olive);
+      padding: 12px 18px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 32px;
+    }
+
+    .ai-disclosure__text {
+      font-size: 0.78rem;
+      font-style: italic;
+      color: var(--color-text-secondary);
+    }
+
+    /* ── Accessibility FAB ── */
+    .a11y-fab {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--color-aged-canvas);
+      border: 1px solid var(--color-border);
+      color: var(--color-star-white);
+      font-size: 22px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 150ms;
+      z-index: 500;
+    }
+
+    .a11y-fab:hover { border-color: var(--color-old-glory-red); }
+    .a11y-fab:focus-visible { outline: 2px solid var(--color-old-glory-red); outline-offset: 2px; }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .shell { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .main { padding: 24px; }
+      .stat-grid { grid-template-columns: repeat(2, 1fr); }
+      .lockdown-panel { flex-direction: column; align-items: flex-start; }
+    }
+
+    /* ── Skip link ── */
+    .skip-link {
+      position: absolute;
+      left: -9999px;
+      top: 0;
+      background: var(--color-old-glory-red);
+      color: #fff;
+      padding: 8px 16px;
+      font-family: var(--font-heading);
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      text-decoration: none;
+      z-index: 2000;
+    }
+    .skip-link:focus { left: 0; }
+
+    /* ── Utility ── */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- Crisis line — sticky, always visible, non-dismissable -->
+  <a
+    href="tel:988"
+    class="crisis-banner"
+    aria-label="Veterans Crisis Line. Call 988 and press 1. Text 838255. Chat at VeteransCrisisLine.net"
+  >
+    <span class="crisis-banner__star" aria-hidden="true">★</span>
+    <span class="crisis-banner__text">
+      VETERANS CRISIS LINE: CALL 988 PRESS 1 &nbsp;|&nbsp; TEXT 838255 &nbsp;|&nbsp; CHAT VETERANSCRISISLINE.NET
+    </span>
+    <span class="crisis-banner__star" aria-hidden="true">★</span>
+  </a>
+
+  <div class="shell">
+    <!-- Sidebar navigation -->
+    <nav class="sidebar" aria-label="Admin navigation">
+      <div class="sidebar__logo">
+        <span class="sidebar__logo-star" aria-hidden="true">★</span>
+        <div class="sidebar__logo-text">
+          <span class="sidebar__logo-name">VetAssist</span>
+          <span class="sidebar__logo-sub">Admin Command Center</span>
+        </div>
+      </div>
+
+      <div class="sidebar__section-label" aria-hidden="true">Overview</div>
+      <button class="nav-item nav-item--active" aria-current="page" onclick="showSection('dashboard')">
+        <span aria-hidden="true">◈</span> Dashboard
+      </button>
+      <button class="nav-item" onclick="showSection('dashboard')">
+        <span aria-hidden="true">◎</span> Platform Metrics
+      </button>
+
+      <div class="sidebar__section-label" aria-hidden="true">Moderation</div>
+      <button class="nav-item" onclick="showSection('moderation')">
+        <span aria-hidden="true">⚑</span> Moderation Queue
+        <span class="nav-item__badge" aria-label="7 items pending">7</span>
+      </button>
+      <button class="nav-item" onclick="showSection('moderation')">
+        <span aria-hidden="true">◻</span> Reported Content
+      </button>
+
+      <div class="sidebar__section-label" aria-hidden="true">Safety</div>
+      <button class="nav-item" onclick="showSection('compliance')">
+        <span aria-hidden="true">⊛</span> Compliance Log
+      </button>
+      <button class="nav-item" onclick="showSection('compliance')">
+        <span aria-hidden="true">⊘</span> PII Audit Trail
+      </button>
+
+      <div class="sidebar__section-label" aria-hidden="true">Content</div>
+      <button class="nav-item" onclick="showSection('regulations')">
+        <span aria-hidden="true">⊞</span> VA Reg Updates
+        <span class="nav-item__badge" aria-label="3 items pending review">3</span>
+      </button>
+      <button class="nav-item" onclick="showSection('regulations')">
+        <span aria-hidden="true">◫</span> Knowledge Base
+      </button>
+
+      <div class="sidebar__section-label" aria-hidden="true">Reports</div>
+      <button class="nav-item" onclick="showSection('reports')">
+        <span aria-hidden="true">◧</span> Grant Reports
+      </button>
+      <button class="nav-item" onclick="showSection('reports')">
+        <span aria-hidden="true">◨</span> Deletion Certs
+      </button>
+
+      <!-- Flag watermark — felt not seen -->
+      <div class="sidebar__flag-watermark" aria-hidden="true">
+        <svg viewBox="0 0 200 140" xmlns="http://www.w3.org/2000/svg">
+          <rect y="0"   width="200" height="14" fill="#B22234"/>
+          <rect y="14"  width="200" height="14" fill="white" opacity="0.5"/>
+          <rect y="28"  width="200" height="14" fill="#B22234"/>
+          <rect y="42"  width="200" height="14" fill="white" opacity="0.5"/>
+          <rect y="56"  width="200" height="14" fill="#B22234"/>
+          <rect y="70"  width="200" height="14" fill="white" opacity="0.5"/>
+          <rect y="84"  width="200" height="14" fill="#B22234"/>
+          <rect y="98"  width="200" height="14" fill="white" opacity="0.5"/>
+          <rect y="112" width="200" height="14" fill="#B22234"/>
+          <rect y="126" width="200" height="14" fill="white" opacity="0.5"/>
+          <rect y="0" width="80" height="70" fill="#1A2744"/>
+          <!-- Stars in union -->
+          <text x="10" y="20"  fill="white" font-size="10" opacity="0.8">★ ★ ★</text>
+          <text x="20" y="35"  fill="white" font-size="10" opacity="0.8">★ ★</text>
+          <text x="10" y="50"  fill="white" font-size="10" opacity="0.8">★ ★ ★</text>
+          <text x="20" y="65"  fill="white" font-size="10" opacity="0.8">★ ★</text>
+        </svg>
+      </div>
+    </nav>
+
+    <!-- Main content -->
+    <main id="main-content" class="main">
+
+      <!-- AI disclosure banner — required on all AI-powered screens -->
+      <div class="ai-disclosure" role="note" aria-label="AI disclosure">
+        <span aria-hidden="true">⚙</span>
+        <p class="ai-disclosure__text">
+          VetAssist uses AI to provide educational information. This is not legal or medical advice.
+          For claim-specific help, contact a VA-accredited VSO. — <em>Admin view: compliance events and metrics are derived from anonymized system logs. No PII is displayed here.</em>
+        </p>
+      </div>
+
+      <!-- PII architecture notice -->
+      <div class="audit-notice" role="note" aria-label="PII audit notice">
+        <span class="audit-notice__icon" aria-hidden="true">🛡</span>
+        <p class="audit-notice__text">
+          ★ All event logs display event type and timestamp only. SSNs and personal identifiers are never stored, displayed, or accessible in this interface — by architectural design, not policy. Redaction occurs upstream before any data reaches this system.
+        </p>
+      </div>
+
+      <!-- Dashboard page header -->
+      <header class="page-header">
+        <p class="page-header__eyebrow">Command Center</p>
+        <h1 class="page-header__title">Platform Dashboard</h1>
+        <p class="page-header__meta mono" id="live-timestamp">Loading…</p>
+      </header>
+
+      <!-- Stat grid -->
+      <section aria-labelledby="stats-heading">
+        <h2 id="stats-heading" class="sr-only">Platform statistics</h2>
+        <div class="stat-grid">
+          <div class="stat-card stat-card--success" role="region" aria-label="Veterans served today">
+            <div class="stat-card__value stat-card__value--green">1,847</div>
+            <div class="stat-card__label">Veterans Served Today</div>
+            <div class="stat-card__trend stat-card__trend--up">↑ 12% vs. yesterday</div>
+          </div>
+
+          <div class="stat-card" role="region" aria-label="Documents reviewed">
+            <div class="stat-card__value">342</div>
+            <div class="stat-card__label">Documents Reviewed</div>
+            <div class="stat-card__trend stat-card__trend--flat">→ Stable</div>
+          </div>
+
+          <div class="stat-card stat-card--alert" role="region" aria-label="Moderation queue items">
+            <div class="stat-card__value stat-card__value--alert">7</div>
+            <div class="stat-card__label">Pending Moderation</div>
+            <div class="stat-card__trend stat-card__trend--down">↑ Needs review</div>
+          </div>
+
+          <div class="stat-card" role="region" aria-label="PII events today">
+            <div class="stat-card__value stat-card__value--gold">23</div>
+            <div class="stat-card__label">PII Events Today</div>
+            <div class="stat-card__trend stat-card__trend--flat">All auto-redacted</div>
+          </div>
+
+          <div class="stat-card stat-card--alert" role="region" aria-label="Crisis events">
+            <div class="stat-card__value stat-card__value--alert">2</div>
+            <div class="stat-card__label">Crisis Events</div>
+            <div class="stat-card__trend stat-card__trend--down">Resources displayed</div>
+          </div>
+
+          <div class="stat-card stat-card--success" role="region" aria-label="Compliance pass rate">
+            <div class="stat-card__value stat-card__value--green">99.1%</div>
+            <div class="stat-card__label">Compliance Pass Rate</div>
+            <div class="stat-card__trend stat-card__trend--up">↑ 0.3% vs. last week</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Community lockdown toggle -->
+      <div class="lockdown-panel" role="group" aria-labelledby="lockdown-label">
+        <div class="lockdown-panel__info">
+          <div class="lockdown-panel__label" id="lockdown-label">⚑ Community Lockdown Mode</div>
+          <p class="lockdown-panel__desc">
+            When enabled, all community posts require manual admin approval before publishing.
+            Use during elevated toxicity periods or after critical incidents.
+          </p>
+        </div>
+        <div class="toggle-wrap">
+          <span class="toggle-label" id="lockdown-state-label">Off</span>
+          <label class="toggle" aria-label="Community lockdown mode">
+            <input
+              type="checkbox"
+              id="lockdown-toggle"
+              aria-describedby="lockdown-label"
+              onchange="handleLockdownToggle(this)"
+            />
+            <span class="toggle__track"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="stripe-divider" aria-hidden="true"></div>
+
+      <!-- Moderation queue -->
+      <section aria-labelledby="moderation-heading">
+        <div class="section-header">
+          <h2 id="moderation-heading" class="section-header__title">Moderation Queue</h2>
+          <span class="badge badge--red" aria-label="7 items awaiting review">7 Pending</span>
+        </div>
+
+        <div role="region" aria-label="Moderation queue table" tabindex="0" style="overflow-x:auto;">
+          <table class="queue-table" aria-describedby="moderation-heading">
+            <thead>
+              <tr>
+                <th scope="col">Event ID</th>
+                <th scope="col">Type</th>
+                <th scope="col">Flagged By</th>
+                <th scope="col">Time</th>
+                <th scope="col">Status</th>
+                <th scope="col"><span class="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="queue-table__id mono">EVT-00841</td>
+                <td><span class="badge badge--red">Toxic Content</span></td>
+                <td class="queue-table__flag">Auto-filter (toxic-bert: 0.94)</td>
+                <td class="queue-table__id mono">14:32 PST</td>
+                <td><span class="badge badge--gold">Pending</span></td>
+                <td>
+                  <div class="btn-row">
+                    <button class="btn btn--approve" aria-label="Approve event EVT-00841">Approve</button>
+                    <button class="btn btn--danger"  aria-label="Remove event EVT-00841">Remove</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="queue-table__id mono">EVT-00839</td>
+                <td><span class="badge badge--gold">PII Detected</span></td>
+                <td class="queue-table__flag">Auto-filter (Presidio)</td>
+                <td class="queue-table__id mono">13:51 PST</td>
+                <td><span class="badge badge--gold">Pending</span></td>
+                <td>
+                  <div class="btn-row">
+                    <button class="btn btn--approve" aria-label="Approve event EVT-00839">Approve</button>
+                    <button class="btn btn--danger"  aria-label="Remove event EVT-00839">Remove</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="queue-table__id mono">EVT-00836</td>
+                <td><span class="badge badge--red">Community Report</span></td>
+                <td class="queue-table__flag">3 veteran reports</td>
+                <td class="queue-table__id mono">12:18 PST</td>
+                <td><span class="badge badge--gold">Pending</span></td>
+                <td>
+                  <div class="btn-row">
+                    <button class="btn btn--approve" aria-label="Approve event EVT-00836">Approve</button>
+                    <button class="btn btn--danger"  aria-label="Remove event EVT-00836">Remove</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="queue-table__id mono">EVT-00822</td>
+                <td><span class="badge badge--blue">Spam</span></td>
+                <td class="queue-table__flag">Auto-filter (spam: 0.88)</td>
+                <td class="queue-table__id mono">09:04 PST</td>
+                <td><span class="badge badge--gold">Pending</span></td>
+                <td>
+                  <div class="btn-row">
+                    <button class="btn btn--approve" aria-label="Approve event EVT-00822">Approve</button>
+                    <button class="btn btn--danger"  aria-label="Remove event EVT-00822">Remove</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="stripe-divider" aria-hidden="true"></div>
+
+      <!-- Compliance event log -->
+      <section aria-labelledby="compliance-heading">
+        <div class="section-header">
+          <h2 id="compliance-heading" class="section-header__title">Compliance Event Log</h2>
+          <span class="badge badge--olive">Live Feed</span>
+        </div>
+
+        <div class="log-list" role="log" aria-label="Compliance event log" aria-live="polite">
+          <div class="log-item log-item--crisis">
+            <span class="log-item__icon" aria-hidden="true">🔴</span>
+            <div class="log-item__body">
+              <div class="log-item__event">Crisis Keywords Detected</div>
+              <div class="log-item__meta">Crisis resources displayed immediately. Event logged. No content stored.</div>
+            </div>
+            <span class="log-item__timestamp mono">14:47 PST</span>
+          </div>
+
+          <div class="log-item log-item--pii">
+            <span class="log-item__icon" aria-hidden="true">🟡</span>
+            <div class="log-item__body">
+              <div class="log-item__event">PII Redaction Event</div>
+              <div class="log-item__meta">Type: SSN pattern. Action: Auto-redacted before AI processing. Value never stored.</div>
+            </div>
+            <span class="log-item__timestamp mono">14:31 PST</span>
+          </div>
+
+          <div class="log-item log-item--medical">
+            <span class="log-item__icon" aria-hidden="true">🔵</span>
+            <div class="log-item__body">
+              <div class="log-item__event">Medical Advice Blocked</div>
+              <div class="log-item__meta">AI response intercepted. Regenerated with educational framing. CFR citation retained.</div>
+            </div>
+            <span class="log-item__timestamp mono">13:58 PST</span>
+          </div>
+
+          <div class="log-item log-item--passed">
+            <span class="log-item__icon" aria-hidden="true">🟢</span>
+            <div class="log-item__body">
+              <div class="log-item__event">Compliance Passed — Chat Response</div>
+              <div class="log-item__meta">All 6 checks passed. Confidence: high (CFR citation matched). Response delivered.</div>
+            </div>
+            <span class="log-item__timestamp mono">13:52 PST</span>
+          </div>
+
+          <div class="log-item log-item--pii">
+            <span class="log-item__icon" aria-hidden="true">🟡</span>
+            <div class="log-item__body">
+              <div class="log-item__event">PII Redaction Event</div>
+              <div class="log-item__meta">Type: VA File Number pattern. Action: Stripped before AI. Document processing continued.</div>
+            </div>
+            <span class="log-item__timestamp mono">13:40 PST</span>
+          </div>
+
+          <div class="log-item log-item--passed">
+            <span class="log-item__icon" aria-hidden="true">🟢</span>
+            <div class="log-item__body">
+              <div class="log-item__event">Compliance Passed — Document Review</div>
+              <div class="log-item__meta">All checks passed. Confidence: medium (general guidance). Transparency note appended.</div>
+            </div>
+            <span class="log-item__timestamp mono">13:22 PST</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="stripe-divider" aria-hidden="true"></div>
+
+      <!-- VA regulation updates -->
+      <section aria-labelledby="regs-heading">
+        <div class="section-header">
+          <h2 id="regs-heading" class="section-header__title">VA Regulation Update Queue</h2>
+          <span class="badge badge--red" aria-label="3 items pending admin review">3 Pending Review</span>
+        </div>
+
+        <div class="update-card" role="article" aria-label="CFR update pending review">
+          <span class="update-card__cfr" aria-label="CFR citation">38 CFR § 3.304(f)</span>
+          <div class="update-card__body">
+            <div class="update-card__title">PTSD Direct Service Connection — Stressor Requirement Update</div>
+            <p class="update-card__summary">
+              Federal Register Vol. 91 — Proposed amendment to stressor corroboration requirements for PTSD claims.
+              Automated monitor detected change on 2026-04-18. Awaiting admin review before knowledge base update.
+            </p>
+            <div class="btn-row">
+              <button class="btn btn--primary" aria-label="Approve CFR update for 38 CFR section 3.304(f)">★ Approve Update</button>
+              <button class="btn btn--ghost"   aria-label="View full CFR document for section 3.304(f)">View Full CFR</button>
+              <button class="btn btn--danger"  aria-label="Reject this CFR update">Reject</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="update-card" role="article" aria-label="CFR update pending review">
+          <span class="update-card__cfr" aria-label="CFR citation">38 CFR § 4.130</span>
+          <div class="update-card__body">
+            <div class="update-card__title">Mental Disorders Rating Schedule — Diagnostic Criteria Clarification</div>
+            <p class="update-card__summary">
+              VA clarification notice issued 2026-04-14. Affects rating criteria for GAF score alternatives following DSM-5 adoption.
+              Low-confidence match — manual review recommended before knowledge base push.
+            </p>
+            <div class="btn-row">
+              <button class="btn btn--primary" aria-label="Approve CFR update for 38 CFR section 4.130">★ Approve Update</button>
+              <button class="btn btn--ghost"   aria-label="View full CFR document for section 4.130">View Full CFR</button>
+              <button class="btn btn--danger"  aria-label="Reject this CFR update">Reject</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="update-card" role="article" aria-label="CFR update pending review">
+          <span class="update-card__cfr" aria-label="CFR citation">38 CFR § 3.400</span>
+          <div class="update-card__body">
+            <div class="update-card__title">Effective Date Rules — Electronic Submission Clarification</div>
+            <p class="update-card__summary">
+              eCFR monitor detected amendment 2026-04-19. Relates to effective dates for electronically submitted claims.
+              High-confidence match. Affects document coaching guidance in chat handler.
+            </p>
+            <div class="btn-row">
+              <button class="btn btn--primary" aria-label="Approve CFR update for 38 CFR section 3.400">★ Approve Update</button>
+              <button class="btn btn--ghost"   aria-label="View full CFR document for section 3.400">View Full CFR</button>
+              <button class="btn btn--danger"  aria-label="Reject this CFR update">Reject</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="stripe-divider" aria-hidden="true"></div>
+
+      <!-- Grant report quick view -->
+      <section aria-labelledby="grants-heading">
+        <div class="section-header">
+          <h2 id="grants-heading" class="section-header__title">Grant Report Metrics</h2>
+          <button class="btn btn--ghost" aria-label="Export grant report as PDF">Export PDF</button>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat-card stat-card--success" role="region" aria-label="Total veterans served this month">
+            <div class="stat-card__value stat-card__value--green">38,420</div>
+            <div class="stat-card__label">Veterans Served (MTD)</div>
+            <div class="stat-card__trend stat-card__trend--up">↑ 22% vs. prior month</div>
+          </div>
+          <div class="stat-card" role="region" aria-label="Documents analyzed this month">
+            <div class="stat-card__value">9,104</div>
+            <div class="stat-card__label">Documents Analyzed</div>
+            <div class="stat-card__trend stat-card__trend--up">↑ 18% vs. prior month</div>
+          </div>
+          <div class="stat-card" role="region" aria-label="Benefits pathways discovered">
+            <div class="stat-card__value">2,381</div>
+            <div class="stat-card__label">Benefits Pathways Found</div>
+            <div class="stat-card__trend stat-card__trend--up">↑ 31% vs. prior month</div>
+          </div>
+          <div class="stat-card stat-card--success" role="region" aria-label="Deletion certificates issued">
+            <div class="stat-card__value stat-card__value--green">147</div>
+            <div class="stat-card__label">Deletion Certs Issued</div>
+            <div class="stat-card__trend stat-card__trend--flat">→ Compliance healthy</div>
+          </div>
+        </div>
+        <p style="font-size:0.72rem; color:var(--color-text-secondary); margin-top:8px;">
+          ★ All metrics are aggregate counts only. Zero PII included in grant reports — by design.
+        </p>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Accessibility FAB -->
+  <button
+    class="a11y-fab"
+    aria-label="Accessibility options"
+    aria-expanded="false"
+    aria-controls="a11y-panel"
+    onclick="toggleA11yPanel(this)"
+  >
+    ⓘ
+  </button>
+
+  <script>
+    // Live timestamp — updates every minute
+    function updateTimestamp() {
+      const el = document.getElementById('live-timestamp');
+      if (!el) return;
+      const now = new Date();
+      const opts = { timeZone: 'America/Los_Angeles', hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric', year: 'numeric' };
+      el.textContent = now.toLocaleString('en-US', opts) + ' PST — Live';
+    }
+    updateTimestamp();
+    setInterval(updateTimestamp, 60_000);
+
+    // Community lockdown toggle — reflects state in label
+    function handleLockdownToggle(checkbox) {
+      const label = document.getElementById('lockdown-state-label');
+      if (!label) return;
+      label.textContent = checkbox.checked ? 'ON — All posts require approval' : 'Off';
+      // Wire to API: POST /admin/community/lockdown { enabled: checkbox.checked }
+    }
+
+    // Accessibility FAB placeholder
+    function toggleA11yPanel(btn) {
+      const expanded = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', String(!expanded));
+      // Future: open bottom sheet with font size, contrast, motion toggles
+    }
+
+    // Staggered nav item interaction — highlights active section
+    function showSection(section) {
+      // Navigation is illustrative in this static admin shell.
+      // Real routing handled by Next.js App Router at /admin/[section].
+    }
+  </script>
+</body>
+</html>

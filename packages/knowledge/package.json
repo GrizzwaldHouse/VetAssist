@@ -1,0 +1,28 @@
+{
+  "name": "@vetassist/knowledge",
+  "version": "0.1.0",
+  "description": "VetAssist knowledge base — Chroma vector DB, weighted retrieval, chunk management",
+  "author": "Marcus Daley",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "chromadb": "^1.8.0",
+    "@anthropic-ai/sdk": "^0.26.0",
+    "@vetassist/shared-types": "*",
+    "@vetassist/shared-config": "*",
+    "@vetassist/events": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0",
+    "@types/node": "^22.0.0"
+  }
+}

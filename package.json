@@ -1,0 +1,34 @@
+{
+  "name": "vetassist",
+  "version": "1.0.0",
+  "private": true,
+  "description": "VetAssist — Your AI Battle Buddy for VA Benefits",
+  "author": "Marcus Daley",
+  "license": "MIT",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "test": "turbo test",
+    "test:pii": "vitest run tests/pii-scrubber.test.ts",
+    "test:compliance": "vitest run tests/compliance-engine.test.ts",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "clean": "turbo clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0",
+    "@types/node": "^22.0.0",
+    "prettier": "^3.3.0",
+    "eslint": "^9.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "packageManager": "npm@10.0.0"
+}

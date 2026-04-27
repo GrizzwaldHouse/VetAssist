@@ -1,0 +1,20 @@
+{
+  "name": "@vetassist/shared-types",
+  "version": "0.1.0",
+  "description": "VetAssist shared TypeScript types — all interfaces, no business logic",
+  "author": "Marcus Daley",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}

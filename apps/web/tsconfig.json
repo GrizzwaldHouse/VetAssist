@@ -1,0 +1,45 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "jsx": "preserve",
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "@vetassist/shared-types": [
+        "../../packages/shared-types/src"
+      ],
+      "@vetassist/shared-utils": [
+        "../../packages/shared-utils/src"
+      ],
+      "@vetassist/shared-config": [
+        "../../packages/shared-config/src"
+      ],
+      "@vetassist/ui-components": [
+        "../../packages/ui-components/src"
+      ]
+    },
+    "allowJs": true,
+    "noEmit": true,
+    "incremental": true,
+    "isolatedModules": true
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

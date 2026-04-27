@@ -1,0 +1,27 @@
+// EventTypes.ts
+// Developer: Marcus Daley
+// Date: 2026-04-20
+// Purpose: Re-export event type names as constants for safe string-literal usage
+
+// Re-export the EventPayloadMap as the canonical event type registry
+export type { EventPayloadMap, VetAssistEvent } from '@vetassist/shared-types';
+
+// String literal constants — prevents typos in event name strings
+export const EVENTS = {
+  USER_INPUT_RECEIVED: 'USER_INPUT_RECEIVED',
+  PII_DETECTED: 'PII_DETECTED',
+  INPUT_SANITIZED: 'INPUT_SANITIZED',
+  CRISIS_DETECTED: 'CRISIS_DETECTED',
+  AI_REQUEST_STARTED: 'AI_REQUEST_STARTED',
+  AI_RESPONSE_RECEIVED: 'AI_RESPONSE_RECEIVED',
+  LEGAL_BOUNDARY_TRIGGERED: 'LEGAL_BOUNDARY_TRIGGERED',
+  COMPLIANCE_FAILED: 'COMPLIANCE_FAILED',
+  COMPLIANCE_PASSED: 'COMPLIANCE_PASSED',
+  RESPONSE_READY: 'RESPONSE_READY',
+  DOCUMENT_UPLOADED: 'DOCUMENT_UPLOADED',
+  OCR_COMPLETED: 'OCR_COMPLETED',
+  DOCUMENT_DELETED: 'DOCUMENT_DELETED',
+  DOCUMENT_GENERATED: 'DOCUMENT_GENERATED',
+  CLAIM_CREATED: 'CLAIM_CREATED',
+  CLAIM_UPDATED: 'CLAIM_UPDATED',
+} as const satisfies Record<string, string>;

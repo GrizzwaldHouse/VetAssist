@@ -1,0 +1,31 @@
+{
+  "name": "@vetassist/web",
+  "version": "0.1.0",
+  "description": "VetAssist Next.js web application — chat UI, document review, accessibility-first",
+  "author": "Marcus Daley",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@vetassist/claims": "*",
+    "@vetassist/shared-config": "*",
+    "@vetassist/shared-types": "*",
+    "@vetassist/shared-utils": "*",
+    "@vetassist/ui-components": "*",
+    "next": "^14.2.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "typescript": "^5.4.0"
+  }
+}

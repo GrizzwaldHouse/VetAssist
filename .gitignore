@@ -1,0 +1,67 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+.expo/
+
+# Environment (NEVER commit real env files)
+.env
+.env.local
+.env.production
+.env.staging
+
+# Database
+*.db
+*.sqlite
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# Testing
+coverage/
+.nyc_output/
+
+# Temporary files
+tmp/
+temp/
+uploads/
+
+# PII audit logs (contain timestamps but NEVER PII values)
+# Still exclude from git as a precaution
+pii-audit.jsonl
+
+# Turbo
+.turbo/
+
+# Certificates (generated locally)
+deletion-certificates/
+
+# Session state
+.vetassist-progress.json
+
+# lean-ctx stats (local only)
+.lean-ctx/
+
+# External repo clones and planning artifacts (local only)
+planning/
+
+# oh-my-claudecode local state
+.omc/

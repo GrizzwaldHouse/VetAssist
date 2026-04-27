@@ -1,0 +1,97 @@
+/* tokens.css */
+/* Developer: Marcus Daley */
+/* Date: 2026-04-20 */
+/* Purpose: Stars & Field design token file — all CSS custom properties for the VetAssist design system.
+   All ui-components import from here. Never hardcode hex values in component files. */
+
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Source+Serif+4:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* ── Color system — Stars & Field palette (60-30-10 rule) ── */
+
+  /* 60% dominant — base surface */
+  --va-color-field-black:       #0D0F14;
+
+  /* 30% secondary — card and panel surfaces */
+  --va-color-aged-canvas:       #1C2033;
+
+  /* 10% accent — CTAs, crisis, active states */
+  --va-color-old-glory-red:     #B22234;
+
+  /* Text */
+  --va-color-text-primary:      #EDF0F4;
+  --va-color-text-secondary:    #8A96AA;
+  --va-color-star-white:        #F5F5F5;
+
+  /* Structural */
+  --va-color-field-blue:        #1A2744;
+  --va-color-stripe-red-muted:  #7A1A1A;
+  --va-color-military-olive:    #4A5240;
+  --va-color-border:            #2A3149;
+  --va-color-surface-hover:     #222640;
+
+  /* Crisis — deep military red, never changed */
+  --va-color-crisis-bg:         #8B0000;
+  --va-color-crisis-text:       #FFFFFF;
+
+  /* Score gradient — low / mid / high */
+  --va-color-score-low:         #B22234;
+  --va-color-score-mid:         #C8A135;
+  --va-color-score-high:        #4A7C59;
+
+  /* ── Typography ── */
+  --va-font-heading:  'Oswald',        Georgia, serif;
+  --va-font-body:     'Source Serif 4', Georgia, serif;
+  --va-font-mono:     'JetBrains Mono', monospace;
+
+  /* Type scale — base 18px, 1.333 Perfect Fourth ratio */
+  --va-text-display:  3.17rem;   /* ~57px */
+  --va-text-h1:       2.33rem;   /* ~42px */
+  --va-text-h2:       1.78rem;   /* ~32px */
+  --va-text-h3:       1.33rem;   /* ~24px */
+  --va-text-h4:       1rem;      /* 18px  */
+  --va-text-body:     1rem;      /* 18px  */
+  --va-text-small:    0.78rem;   /* ~14px */
+  --va-text-caption:  0.67rem;   /* ~12px */
+  --va-text-label:    0.61rem;   /* ~11px */
+
+  /* ── Spacing — 8px base grid ── */
+  --va-space-1:   8px;
+  --va-space-2:  16px;
+  --va-space-3:  24px;
+  --va-space-4:  32px;
+  --va-space-5:  40px;
+  --va-space-6:  48px;
+  --va-space-8:  64px;
+  --va-space-10: 80px;
+
+  /* ── Layout ── */
+  --va-radius-card:       4px;
+  --va-gutter:            24px;
+  --va-section-gap:       48px;
+  --va-content-max-width: 900px;
+  --va-sidebar-width:     240px;
+  --va-touch-target-min:  48px;
+
+  /* ── Motion — purposeful only ── */
+  --va-duration-fast:   150ms;
+  --va-duration-normal: 200ms;
+  --va-duration-slow:   800ms;
+  --va-ease-out:        cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ── Z-index layers ── */
+  --va-z-crisis:   1000;
+  --va-z-modal:     900;
+  --va-z-sidebar:   800;
+  --va-z-fab:       500;
+  --va-z-tooltip:   400;
+}
+
+/* Respect reduced motion — instant transitions when OS setting is on */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --va-duration-fast:   0ms;
+    --va-duration-normal: 0ms;
+    --va-duration-slow:   0ms;
+  }
+}

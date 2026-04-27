@@ -1,0 +1,82 @@
+// LayoutShell.tsx
+// Developer: Marcus Daley
+// Date: 2026-04-21
+// Purpose: Client-boundary wrapper for interactive layout elements — NavSidebar, AccessibilityControls, CrisisLineBanner
+
+'use client';
+
+import React from 'react';
+// Direct imports — avoids pulling the full barrel into the server layout tree
+// All of these components use hooks and must be in a client boundary
+import { CrisisLineBanner }    from '@vetassist/ui-components/src/CrisisLineBanner.js';
+import { NavSidebar }          from '@vetassist/ui-components/src/NavSidebar.js';
+import { AccessibilityControls } from '@vetassist/ui-components/src/AccessibilityControls.js';
+
+// Nav structure constant — no magic strings in JSX
+const NAV_SECTIONS = [
+  {
+    label: 'Main',
+    items: [
+      { id: 'home',      label: 'Home',      href: '/',          icon: '⌂' },
+      { id: 'chat',      label: 'Chat',      href: '/chat',      icon: '◎' },
+      { id: 'documents', label: 'Documents', href: '/documents', icon: '☰' },
+      { id: 'discover',  label: 'Discover',  href: '/discover',  icon: '✦' },
+      { id: 'generate',  label: 'Generate',  href: '/generate',  icon: '✎' },
+      { id: 'tracker',   label: 'Tracker',   href: '/tracker',   icon: '◈' },
+    ],
+  },
+  {
+    label: 'Account',
+    items: [
+      { id: 'settings', label: 'Settings', href: '/settings', icon: '⚙' },
+    ],
+  },
+];
+
+const rootStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  minHeight: '100vh',
+  backgroundColor: 'var(--va-color-background)',
+  color: 'var(--va-color-text-primary)',
+};
+
+const bodyRowStyle: React.CSSProperties = {
+  display: 'flex',
+  flex: 1,
+};
+
+const mainStyle: React.CSSProperties = {
+  flex: 1,
+  overflowY: 'auto',
+  paddingTop: '16px',
+};
+
+interface LayoutShellProps {
+  readonly children: React.ReactNode;
+}
+
+export function LayoutShell({ children }: LayoutShellProps) {
+  return (
+    <div style={rootStyle}>
+      {/* Crisis line — non-dismissable, highest z-index */}
+      <CrisisLineBanner />
+
+      <div style={bodyRowStyle}>
+        {/* Left sidebar — active item derived from current pathname */}
+        <NavSidebar
+          sections={NAV_SECTIONS}
+          activeItemId=""
+        />
+
+        {/* Page content landmark */}
+        <main id="main-content" style={mainStyle}>
+          {children}
+        </main>
+      </div>
+
+      {/* Accessibility FAB — fixed position, outside document flow */}
+      <AccessibilityControls />
+    </div>
+  );
+}

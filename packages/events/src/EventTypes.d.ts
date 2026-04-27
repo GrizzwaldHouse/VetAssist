@@ -1,0 +1,17 @@
+export type { EventPayloadMap, VetAssistEvent } from '@vetassist/shared-types';
+export declare const EVENTS: {
+    readonly USER_INPUT_RECEIVED: "USER_INPUT_RECEIVED";
+    readonly PII_DETECTED: "PII_DETECTED";
+    readonly INPUT_SANITIZED: "INPUT_SANITIZED";
+    readonly CRISIS_DETECTED: "CRISIS_DETECTED";
+    readonly AI_REQUEST_STARTED: "AI_REQUEST_STARTED";
+    readonly AI_RESPONSE_RECEIVED: "AI_RESPONSE_RECEIVED";
+    readonly LEGAL_BOUNDARY_TRIGGERED: "LEGAL_BOUNDARY_TRIGGERED";
+    readonly COMPLIANCE_FAILED: "COMPLIANCE_FAILED";
+    readonly COMPLIANCE_PASSED: "COMPLIANCE_PASSED";
+    readonly RESPONSE_READY: "RESPONSE_READY";
+    readonly DOCUMENT_UPLOADED: "DOCUMENT_UPLOADED";
+    readonly OCR_COMPLETED: "OCR_COMPLETED";
+    readonly DOCUMENT_DELETED: "DOCUMENT_DELETED";
+};
+//# sourceMappingURL=EventTypes.d.ts.map

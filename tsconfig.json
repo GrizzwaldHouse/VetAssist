@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "exactOptionalPropertyTypes": false,
+    "outDir": "./dist",
+    "baseUrl": ".",
+    "paths": {
+      "@vetassist/shared-types": ["./packages/shared-types/src"],
+      "@vetassist/shared-utils": ["./packages/shared-utils/src"],
+      "@vetassist/shared-config": ["./packages/shared-config/src"],
+      "@vetassist/ai-engine": ["./packages/ai-engine/src"],
+      "@vetassist/ui-components": ["./packages/ui-components/src"],
+      "@vetassist/events": ["./packages/events/src"],
+      "@vetassist/pii": ["./packages/pii/src"],
+      "@vetassist/crisis": ["./packages/crisis/src"],
+      "@vetassist/legal": ["./packages/legal/src"],
+      "@vetassist/compliance": ["./packages/compliance/src"],
+      "@vetassist/ai": ["./packages/ai/src"],
+      "@vetassist/knowledge": ["./packages/knowledge/src"],
+      "@vetassist/claims": ["./packages/claims/src"]
+    }
+  },
+  "include": ["packages/*/src/**/*.ts", "apps/*/src/**/*.ts", "apps/*/src/**/*.tsx", "tests/**/*.ts"],
+  "exclude": ["node_modules", "dist", "build", ".next", ".expo"]
+}

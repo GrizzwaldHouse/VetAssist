@@ -1,0 +1,421 @@
+{
+  "prompt_id": "vetassist-ui-refactor-v1",
+  "author": "Marcus Daley",
+  "date": "2026-04-20",
+  "purpose": "Design system refactor prompt for Claude to use cowork-skills, ui-ux-pro-max, and karpathy-skills when rebuilding VetAssist UI with military-authentic visual identity",
+  "model": "claude-sonnet-4-6",
+  "target": "claude.ai/code (Claude Design + Claude Code)",
+
+  "skills_required": {
+    "load_before_executing": [
+      {
+        "skill": "frontend-design",
+        "path": "C:/ClaudeSkills/skills/frontend-design/SKILL.md",
+        "reason": "Anti-slop enforcement — commits to a conceptual direction before any code is written"
+      },
+      {
+        "skill": "design-system",
+        "path": "C:/ClaudeSkills/skills/design-system/SKILL.md",
+        "supplemental": [
+          "C:/ClaudeSkills/skills/design-system/color-reference.md",
+          "C:/ClaudeSkills/skills/design-system/typography-reference.md",
+          "C:/ClaudeSkills/skills/design-system/layout-reference.md"
+        ],
+        "reason": "60-30-10 palette math, WCAG contrast ratios, 8px grid, type scale ratios"
+      },
+      {
+        "skill": "ui-ux-pro-max",
+        "install": "npm install -g uipro-cli && uipro init --ai claude --global",
+        "style_keywords": ["Military Heritage", "Editorial Magazine", "Dark Utilitarian"],
+        "reason": "161 reasoning rules + 67 named styles + 57 font pairings — use as the design decision database"
+      },
+      {
+        "skill": "karpathy-skills",
+        "install": "/plugin marketplace add forrestchang/andrej-karpathy-skills",
+        "reason": "Think before coding, define success criteria first, surgical changes only"
+      },
+      {
+        "skill": "universal-coding-standards",
+        "path": "C:/ClaudeSkills/skills/universal-coding-standards/SKILL.md",
+        "reason": "All component code must pass Marcus Daley's universal standards"
+      },
+      {
+        "skill": "vetassist-accessibility",
+        "path": "claude/skills/story_builder_decision_accessibility.md",
+        "reason": "The Grandparent Test — 75-year-old veteran, 48px touch targets, 18px default font, non-dismissable crisis banner"
+      }
+    ]
+  },
+
+  "design_brief": {
+    "product": "VetAssist — Your AI Battle Buddy for VA Benefits",
+    "audience": "US veterans — broad age range, includes Vietnam-era (70s+), Gulf War, Post-9/11. Many deal with TBI, PTSD, chronic pain. Some are not tech-native.",
+    "tone": "Honored service. Quiet authority. This is not a startup. It is not a government portal. It is a battle buddy — trusted, direct, and completely on the veteran's side.",
+    "problem_with_current_design": "The prior UI output was AI slop — generic dark dashboard with no point of view, no connection to the veteran identity, no memorable visual anchor. Inter font, plain dark surface, looked like every other SaaS tool built in 2023. Veterans deserve better.",
+    "design_mandate": "Build a UI that feels like it was made BY a veteran FOR veterans. Incorporate real military visual language — the American flag, service imagery, the texture of worn gear, stars, stripes, the weight of service. Do it with design precision, not clip art energy."
+  },
+
+  "aesthetic_direction": {
+    "codename": "BATTLE BUDDY",
+    "description": "Military heritage editorial — the visual language of a high-quality veteran magazine or a well-funded veteran nonprofit, not a government form or a fintech dashboard",
+    "tone_keywords": ["authoritative", "warm", "earned", "honest", "no-nonsense"],
+    "ui_ux_pro_max_styles": ["Military Heritage", "Dark Editorial", "Utilitarian Premium"],
+
+    "conceptual_anchor": "The American flag is not decoration. It is the emotional core. It appears as a textured background element — deeply muted, desaturated, present as atmosphere not advertisement. Stars become a subtle motif in the grid. The red stripe becomes the accent color. This is visual respect, not patriotic kitsch.",
+
+    "color_system": {
+      "note": "Derived from US flag + military olive — applied with 60-30-10 discipline",
+      "palette_name": "Stars & Field",
+      "roles": {
+        "60_dominant": {
+          "name": "Field Black",
+          "hex": "#0D0F14",
+          "usage": "Base surface — near-black with a faint cool undertone, like the night sky over a base"
+        },
+        "30_secondary": {
+          "name": "Aged Canvas",
+          "hex": "#1C2033",
+          "usage": "Card and panel surfaces — the color of old military canvas or worn denim"
+        },
+        "10_accent": {
+          "name": "Old Glory Red",
+          "hex": "#B22234",
+          "usage": "Primary actions, CTAs, crisis banner, active state indicators — used sparingly and intentionally"
+        },
+        "text_primary": {
+          "hex": "#EDF0F4",
+          "usage": "Main body text — warm off-white, like aged paper"
+        },
+        "text_secondary": {
+          "hex": "#8A96AA",
+          "usage": "Captions, metadata, placeholders"
+        },
+        "star_white": {
+          "hex": "#F5F5F5",
+          "usage": "High emphasis text, icon fills, star motifs"
+        },
+        "field_blue": {
+          "hex": "#1A2744",
+          "usage": "Union blue — hero section backgrounds, feature section dividers"
+        },
+        "stripe_red_muted": {
+          "hex": "#7A1A1A",
+          "usage": "Subtle stripe texture in backgrounds — never full-saturation"
+        },
+        "military_olive": {
+          "hex": "#4A5240",
+          "usage": "Success states, service branch badges, 'approved' indicators"
+        },
+        "score_gradient": {
+          "low": "#B22234",
+          "mid": "#C8A135",
+          "high": "#4A7C59",
+          "note": "Score ring — red (0-39%), gold (40-69%), field green (70-100%)"
+        },
+        "crisis_banner": {
+          "hex": "#8B0000",
+          "text": "#FFFFFF",
+          "note": "Deep military red — non-negotiable, never changed"
+        }
+      },
+      "wcag_validation": {
+        "Field_Black_on_EDF0F4": "15.1:1 — AAA",
+        "Aged_Canvas_on_EDF0F4": "10.2:1 — AAA",
+        "Old_Glory_Red_on_white": "4.8:1 — AA pass",
+        "Star_White_on_Field_Black": "17.4:1 — AAA"
+      },
+      "do_not_use": ["purple", "gradients on white", "teal", "coral", "Inter blue (#2563EB)", "any startup palette"]
+    },
+
+    "typography": {
+      "note": "Military precision meets editorial gravitas. No Inter. No Roboto. No Space Grotesk.",
+      "heading_font": {
+        "family": "Oswald",
+        "weights": [500, 600, 700],
+        "fallback": "Georgia, serif",
+        "google_import": "@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap')",
+        "reason": "Oswald is condensed, strong, stencil-adjacent — reads like dog tags or a military stencil. Authoritative without being bureaucratic."
+      },
+      "body_font": {
+        "family": "Source Serif 4",
+        "weights": [400, 500, 600],
+        "fallback": "Georgia, serif",
+        "google_import": "@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;500;600&display=swap')",
+        "reason": "Serif body reads like long-form journalism — the kind in a respected veterans' magazine. Warm, serious, readable at 18px. Veterans trust print-style typography."
+      },
+      "mono_font": {
+        "family": "JetBrains Mono",
+        "weights": [400, 500],
+        "usage": "Certificate IDs, file names, form field values, deletion certificate data"
+      },
+      "type_scale": {
+        "ratio": "1.333 (Perfect Fourth)",
+        "base": "18px",
+        "note": "Base is 18px NOT 16px — accessibility mandate from claude/skills/story_builder_decision_accessibility.md",
+        "scale": {
+          "display": "57px / weight 700 / line-height 1.05",
+          "h1": "42px / weight 700 / line-height 1.1",
+          "h2": "32px / weight 600 / line-height 1.15",
+          "h3": "24px / weight 600 / line-height 1.2",
+          "h4": "18px / weight 600 / line-height 1.3",
+          "body": "18px / weight 400 / line-height 1.6",
+          "small": "14px / weight 400 / line-height 1.5",
+          "caption": "12px / weight 500 / line-height 1.4",
+          "label": "11px / weight 600 / letter-spacing 0.08em / uppercase"
+        }
+      },
+      "do_not_use": ["Inter", "Roboto", "Arial", "Helvetica", "Space Grotesk", "Poppins", "system-ui"]
+    },
+
+    "texture_and_atmosphere": {
+      "flag_background": {
+        "technique": "Use the American flag as a CSS background-image or SVG texture at very low opacity (0.04–0.08) on hero sections and page backgrounds. It should be felt, not seen. Like a watermark of service.",
+        "implementation": "SVG flag stripes as repeating linear-gradient — alternating #7A1A1A and transparent at 4% opacity. Star field as scattered white dots at 3% opacity using radial-gradient or SVG pattern.",
+        "wrong_way": "Do NOT use a full-color flag photo. Do NOT make it bright or prominent. This is atmosphere, not a bumper sticker."
+      },
+      "grain_overlay": {
+        "technique": "Subtle film grain or noise texture over dark surfaces using CSS filter or SVG feTurbulence at 2-4% opacity",
+        "reason": "Gives the dark surfaces a worn, physical quality — like aged military canvas or a matte tactical surface"
+      },
+      "veteran_imagery": {
+        "usage": "Hero sections and feature cards may use desaturated / duotone military imagery — silhouettes of veterans, hands shaking, a soldier's boots, a dog tag, a folded flag. NEVER stock-photo smiling people. NEVER combat/weapons.",
+        "treatment": "Apply CSS duotone filter in Field Blue (#1A2744) + Old Glory Red (#B22234), or full desaturate with 60% opacity overlay of Field Black",
+        "implementation": "img { filter: grayscale(80%) contrast(1.1); } with overlay div using mix-blend-mode: multiply"
+      },
+      "stripe_dividers": {
+        "technique": "Section dividers use a thin 3px horizontal line alternating between Old Glory Red (#B22234) and transparent — evoking the flag's stripes without being literal",
+        "placement": "Between major page sections. Not between every card."
+      },
+      "star_motif": {
+        "technique": "Five-pointed star (★) used sparingly as a bullet point replacement for key callouts, badge decorations, and section markers. Never more than 3 per screen.",
+        "color": "Star White (#F5F5F5) at 60% opacity"
+      }
+    },
+
+    "spatial_composition": {
+      "layout_style": "Editorial grid with military precision — columns are clean but content is allowed to break the grid intentionally at hero level",
+      "grid": "12-column, 24px gutter, 80px margin on desktop",
+      "card_style": "Sharp corners (4px radius only — not the rounded-2xl softness of consumer apps). Cards feel like mission briefing documents.",
+      "borders": "Thin 1px borders in #2A3149. Left-border accents in Old Glory Red for active/selected states.",
+      "negative_space": "Generous. Veterans with TBI need breathing room. Minimum 48px between major sections.",
+      "asymmetry": "Allowed in hero sections only. Content sections should be structurally disciplined."
+    },
+
+    "motion": {
+      "philosophy": "Every animation must have a reason. Military precision — nothing moves without purpose.",
+      "allowed": [
+        "ScoreRing fill — 800ms ease-out, single play on mount. The flagship animation.",
+        "Page entrance — 200ms fade + 8px translateY, staggered for card grids (50ms delay between cards)",
+        "Hover states — 150ms transition on border-color and background",
+        "Crisis banner pulse — slow 3s opacity pulse (0.85 to 1.0) to draw attention without causing distress"
+      ],
+      "forbidden": [
+        "Auto-playing anything",
+        "Looping decorative animations",
+        "Parallax",
+        "Anything faster than 100ms",
+        "Pop-in effects",
+        "Bounce easing"
+      ],
+      "prefers_reduced_motion": "ALL animations must be wrapped in @media (prefers-reduced-motion: no-preference). When reduced motion is set: instant transitions only."
+    }
+  },
+
+  "component_refactor_targets": {
+    "note": "Rebuild each component from scratch using this design system. Check packages/ui-components/src/ for current state.",
+
+    "CrisisLineBanner": {
+      "current_problem": "Generic red bar with no visual weight or authority",
+      "refactor": {
+        "background": "#8B0000",
+        "left_edge": "4px solid #B22234 stripe",
+        "icon": "White phone icon (24px) + white star (★) left of text",
+        "text": "Oswald 600 14px uppercase letter-spacing: 0.06em — 'VETERANS CRISIS LINE: CALL 988 PRESS 1 | TEXT 838255 | CHAT VETERANSCRISISLINE.NET'",
+        "behavior": "Entire bar is a pressable link. Slow pulse animation (3s, opacity 0.9-1.0). Never dismissable.",
+        "height": "48px"
+      }
+    },
+
+    "ScoreRing": {
+      "current_problem": "Generic circular progress — looks like a fitness app",
+      "refactor": {
+        "size": "140px diameter — large enough to feel authoritative",
+        "stroke_width": "12px",
+        "track_color": "#2A3149",
+        "gradient": "score_gradient from design system (red → gold → field green)",
+        "center_text": {
+          "percentage": "Oswald 700 32px — the number must feel like a military readout",
+          "label": "Source Serif 4 12px #8A96AA — category name below percentage"
+        },
+        "tick_marks": "24 equally-spaced 1px tick marks around the outside ring at 20% opacity — like a precision instrument gauge",
+        "animation": "Stroke-dasharray from 0 to value over 800ms cubic-bezier(0.4, 0, 0.2, 1)",
+        "reduced_motion": "Instant fill, no animation"
+      }
+    },
+
+    "DocumentDropZone": {
+      "current_problem": "Plain dashed box — looks like any file upload widget",
+      "refactor": {
+        "border": "2px dashed #2A3149 — sharp corners, not rounded",
+        "background": "#0D0F14 with grain texture overlay",
+        "icon": "Document icon with a subtle star watermark behind it",
+        "heading_text": "Oswald 600 18px — 'DROP YOUR DOCUMENTS HERE'",
+        "sub_text": "Source Serif 4 14px #8A96AA — 'PDF, JPG, PNG, HEIC, TIFF, DOCX, TXT — Max 25MB per file'",
+        "drag_active_state": "Border becomes #B22234, background shifts to #1A0A0A",
+        "thumbnail_tray": {
+          "layout": "Horizontal scroll with 8px gaps",
+          "thumbnail_card": "80x80px, sharp corners, 1px border #2A3149, label input below"
+        }
+      }
+    },
+
+    "PIIWarningModal": {
+      "current_problem": "Generic modal — could be any warning",
+      "refactor": {
+        "overlay": "rgba(0,0,0,0.85) full screen",
+        "card": {
+          "background": "#1C2033",
+          "border": "1px solid #B22234",
+          "border_left": "4px solid #B22234",
+          "width": "480px max",
+          "sharp_corners": "4px radius only"
+        },
+        "header_row": "Warning triangle icon (Old Glory Red) + star motif (★) + 'SENSITIVE INFORMATION DETECTED' in Oswald 600 16px uppercase",
+        "body_text": "Source Serif 4 16px #EDF0F4 — 'We found [type] in your document and automatically covered it. Your information is protected.'",
+        "cta_button": "Oswald 600 14px uppercase, Old Glory Red background, white text, sharp corners, full width"
+      }
+    },
+
+    "AIDisclosureBanner": {
+      "current_problem": "Forgettable info strip — veterans skip it",
+      "refactor": {
+        "background": "#1A2744",
+        "left_border": "3px solid #4A7C59",
+        "icon": "Circuit/AI icon in Field Blue",
+        "text": "Source Serif 4 14px #8A96AA italic — 'VetAssist uses AI to provide educational information. This is not legal or medical advice. For claim-specific help, contact a VA-accredited VSO.'",
+        "dismiss": "Small 'Got it' text button — collapses to 2px border line for session"
+      }
+    },
+
+    "AccessibilityFAB": {
+      "current_problem": "Generic floating button",
+      "refactor": {
+        "shape": "56x56px circle",
+        "background": "#1C2033",
+        "border": "1px solid #2A3149",
+        "icon": "Accessibility symbol in Star White",
+        "hover": "Border becomes #B22234",
+        "bottom_sheet": {
+          "background": "#1C2033",
+          "border_top": "3px solid #B22234",
+          "controls": ["Font Size slider (Oswald labels)", "Dark/Light toggle", "High Contrast toggle", "Read Page Aloud button", "Reduce Motion toggle"]
+        }
+      }
+    },
+
+    "NavSidebar": {
+      "current_problem": "Generic sidebar — looks like VS Code",
+      "refactor": {
+        "background": "#0D0F14",
+        "width": "240px desktop, 64px collapsed",
+        "border_right": "1px solid #1C2033",
+        "logo_area": {
+          "height": "64px",
+          "content": "Star icon (★) + 'VETASSIST' in Oswald 700 16px uppercase + 'Your AI Battle Buddy' in Source Serif 4 11px #8A96AA"
+        },
+        "nav_item": {
+          "padding": "12px 16px",
+          "font": "Oswald 500 14px uppercase letter-spacing: 0.04em",
+          "color": "#8A96AA",
+          "active_state": "color #EDF0F4, left border 3px solid #B22234, background #1C2033"
+        },
+        "flag_watermark": "American flag SVG at 3% opacity fixed at bottom of sidebar"
+      }
+    },
+
+    "HomeHero": {
+      "current_problem": "No hero exists yet — this sets the tone for everything",
+      "build": {
+        "background": {
+          "base": "#0D0F14",
+          "flag_texture": "Horizontal stripe pattern — alternating #7A1A1A / transparent at 5% opacity",
+          "star_field": "SVG scatter of 12-20 small 5-pointed stars at 4% opacity in upper-left quadrant (union position)",
+          "grain": "SVG feTurbulence noise at 3% opacity"
+        },
+        "layout": "Full-width, 480px min-height, Z-pattern composition",
+        "veteran_image": "Desaturated silhouette photo (veteran with dog tags or folded flag) — right side, duotone Field Blue + slight vignette",
+        "headline": {
+          "text": "Your AI Battle Buddy for VA Benefits",
+          "font": "Oswald 700 42px",
+          "color": "#EDF0F4",
+          "note": "BATTLE BUDDY in Old Glory Red, rest in Star White"
+        },
+        "subheadline": {
+          "text": "Understand your benefits. Write better documents. Navigate the system.",
+          "font": "Source Serif 4 18px",
+          "color": "#8A96AA"
+        },
+        "cta_primary": {
+          "text": "START WITH A CHAT",
+          "font": "Oswald 600 14px uppercase",
+          "background": "#B22234",
+          "color": "#FFFFFF",
+          "padding": "14px 32px",
+          "border_radius": "4px"
+        },
+        "stripe_divider": "3px horizontal line alternating #B22234 / transparent at bottom of hero"
+      }
+    }
+  },
+
+  "page_layout_templates": {
+    "all_pages": {
+      "structure": [
+        "CrisisLineBanner (sticky, 48px, top-most z-index)",
+        "NavSidebar (fixed left, 240px) OR TopNav (mobile)",
+        "Main content area (margin-left: 240px desktop, full-width mobile)",
+        "AIDisclosureBanner (on AI screens only, below nav)",
+        "AccessibilityFAB (fixed bottom-right)"
+      ],
+      "main_content_padding": "40px desktop, 24px mobile",
+      "max_content_width": "900px centered in main area"
+    },
+    "flag_texture_pages": ["Home", "About", "Login", "Onboarding"],
+    "clean_surface_pages": ["Chat", "DocumentReview", "Claims", "Settings"]
+  },
+
+  "success_criteria": {
+    "note": "Per karpathy-skills — define verifiable goals before building",
+    "pass": [
+      "A veteran looking at the first screen immediately understands this was made FOR them, not FOR a startup pitch deck",
+      "The American flag is present as atmosphere in at least 3 screens — never as decoration, always as identity",
+      "Zero uses of Inter, Roboto, Arial, Space Grotesk, or system-ui",
+      "Zero purple, teal, coral, or standard SaaS accent colors",
+      "ScoreRing has tick marks and feels like a precision instrument, not a donut chart",
+      "CrisisLineBanner is visually the most prominent element on every screen",
+      "All text passes WCAG AA contrast minimum (4.5:1 body, 3:1 large)",
+      "All touch targets are 48px minimum",
+      "Reduced motion is respected on all animations",
+      "Design could appear in a respected veteran-focused publication without looking out of place"
+    ],
+    "fail": [
+      "Any component could be copy-pasted into a generic SaaS product unchanged",
+      "The design looks like it was generated in 30 seconds with default prompts",
+      "Flag imagery is bright, patriotic-kitsch, or decorative",
+      "Any font from the do_not_use list appears anywhere",
+      "CrisisLineBanner is dismissable or visually de-emphasized"
+    ]
+  },
+
+  "execution_instructions": {
+    "step_1": "Load all skills listed in skills_required.load_before_executing before writing any code",
+    "step_2": "Read docs/ui-design-spec.md for component behavior and interaction specifications",
+    "step_3": "For each component in component_refactor_targets: read the refactor spec, apply the design system values, build the component, validate against success_criteria",
+    "step_4": "Build components in packages/ui-components/src/ as shared TypeScript/React components — exported from index.ts",
+    "step_5": "After each component: run axe-core accessibility audit, verify WCAG contrast values, run verified-build-gate skill",
+    "step_6": "After all components complete: assemble HomeHero and page layout templates in apps/web/src/",
+    "step_7": "Update .vetassist-progress.json task 'core_ui_components' status to 'completed'",
+    "coding_standards": "Every file needs the header comment: filename, developer (Marcus Daley), date, purpose. Single-line comments only (//). Zero hardcoded values — all colors/fonts as CSS variables from the design token file.",
+    "design_token_file": "Create packages/ui-components/src/tokens.css with all CSS custom properties from this prompt's color_system. All components import from this file — never hardcode hex values in component files."
+  }
+}

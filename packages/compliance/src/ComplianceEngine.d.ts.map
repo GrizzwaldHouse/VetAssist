@@ -1,0 +1,1 @@
+{"version":3,"file":"ComplianceEngine.d.ts","sourceRoot":"","sources":["ComplianceEngine.ts"],"names":[],"mappings":"AAMA,OAAO,KAAK,EAAE,gBAAgB,EAA4C,UAAU,EAAE,MAAM,yBAAyB,CAAC;AAkEtH,iBAAe,QAAQ,CAAC,QAAQ,EAAE,UAAU,GAAG,OAAO,CAAC,gBAAgB,CAAC,CA6DvE;AAGD,iBAAe,eAAe,CAAC,QAAQ,EAAE,UAAU,GAAG,OAAO,CAAC,gBAAgB,CAAC,CAgB9E;AAED,eAAO,MAAM,gBAAgB;;;CAGnB,CAAC"}
