@@ -35,6 +35,7 @@ Everything is free. Always.
 - [Environment Variables](#environment-variables)
 - [Commands](#commands)
 - [Build Status & Phase Progress](#build-status--phase-progress)
+- [Changelog](#changelog)
 - [Crisis Resources](#crisis-resources)
 
 ---
@@ -350,6 +351,16 @@ npx turbo clean && rm -rf node_modules  # Full clean
 | Phase 4 | 🔲 Not started | Mobile app, offline mode, data deletion, analytics dashboard, CI/CD |
 
 **Next task:** Phase 3.6 — VR&E Chapter 31 Guide. Full progress in `.vetassist-progress.json`.
+
+---
+
+## Changelog
+
+> This table is auto-updated by the [Update README](.github/workflows/update-readme.yml) GitHub Action on every push to `main`. Each entry links a commit SHA to the change it delivered.
+
+| Commit | Date | Change | Author |
+|--------|------|--------|--------|
+| `1b09fd7` | 2026-04-29 | docs: rewrite README with interactive GitHub formatting | Marcus Daley |
 
 ---
 

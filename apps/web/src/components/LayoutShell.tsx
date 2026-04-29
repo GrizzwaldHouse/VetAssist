@@ -26,6 +26,14 @@ const NAV_SECTIONS = [
     ],
   },
   {
+    label: 'Resources',
+    items: [
+      { id: 'learn',   label: 'Learn',      href: '/learn',    icon: '✦' },
+      { id: 'faq',     label: 'FAQ',         href: '/faq',      icon: '?' },
+      { id: 'vre',     label: 'VR&E Ch.31',  href: '/vre',      icon: '◈' },
+    ],
+  },
+  {
     label: 'Account',
     items: [
       { id: 'settings', label: 'Settings', href: '/settings', icon: '⚙' },

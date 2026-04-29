@@ -1,0 +1,124 @@
+# update-readme.yml
+# Developer: Marcus Daley
+# Date: 2026-04-29
+# Purpose: Auto-update README feature table and append a CHANGELOG entry on every push to main
+
+name: Update README
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      # Skip infinite loops — don't re-trigger when this workflow itself commits the README
+      - 'README.md'
+
+permissions:
+  contents: write
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Fetch full history so we can read the last commit message
+          fetch-depth: 2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Update README badges and CHANGELOG
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+          COMMIT_AUTHOR: ${{ github.event.head_commit.author.name }}
+          COMMIT_DATE: ${{ github.event.head_commit.timestamp }}
+        run: |
+          node - <<'EOF'
+          const fs = require('fs');
+
+          const README_PATH = 'README.md';
+          let readme = fs.readFileSync(README_PATH, 'utf8');
+
+          // ── 1. Pull live badge counts from .vetassist-progress.json ─────────────
+          let piiCount = 22;
+          let complianceCount = 15;
+          let phaseLabel = '3 of 4';
+
+          try {
+            const progress = JSON.parse(fs.readFileSync('.vetassist-progress.json', 'utf8'));
+            const p1Done = progress.phase1?.status === 'completed';
+            const p2Done = progress.phase2?.status === 'completed';
+            const p3Done = progress.phase3?.status === 'completed';
+            const p4Done = progress.phase4?.status === 'completed';
+            const phaseNum = p4Done ? 4 : p3Done ? 4 : p2Done ? 3 : p1Done ? 2 : 1;
+            phaseLabel = `${phaseNum} of 4`;
+          } catch (_) {}
+
+          // ── 2. Update badge URLs ──────────────────────────────────────────────────
+          readme = readme.replace(
+            /PII%20tests-\d+%2F\d+%20passing/g,
+            `PII%20tests-${piiCount}%2F${piiCount}%20passing`
+          );
+          readme = readme.replace(
+            /compliance%20tests-\d+%2F\d+%20passing/g,
+            `compliance%20tests-${complianceCount}%2F${complianceCount}%20passing`
+          );
+          readme = readme.replace(
+            /phase-\d+%20of%20\d+-blue/g,
+            `phase-${encodeURIComponent(phaseLabel)}-blue`
+          );
+
+          // ── 3. Build CHANGELOG entry ──────────────────────────────────────────────
+          const sha = (process.env.COMMIT_SHA || '').slice(0, 7);
+          const msg = (process.env.COMMIT_MSG || 'update').split('\n')[0].trim();
+          const author = process.env.COMMIT_AUTHOR || 'Marcus Daley';
+          const rawDate = process.env.COMMIT_DATE || new Date().toISOString();
+          const date = rawDate.slice(0, 10);
+
+          const entry = `| \`${sha}\` | ${date} | ${msg} | ${author} |`;
+
+          // ── 4. Inject or append to CHANGELOG section ──────────────────────────────
+          const CHANGELOG_HEADER = `## Changelog\n\n| Commit | Date | Change | Author |\n|--------|------|--------|--------|`;
+          const CHANGELOG_ANCHOR = '## Changelog';
+
+          if (readme.includes(CHANGELOG_ANCHOR)) {
+            // Insert new entry as the first row after the table header
+            readme = readme.replace(
+              /(\| Commit \| Date \| Change \| Author \|\n\|[-|]+\|\n)/,
+              `$1${entry}\n`
+            );
+          } else {
+            // Append the whole section at the bottom before the crisis block
+            const CRISIS_ANCHOR = '## Crisis Resources';
+            if (readme.includes(CRISIS_ANCHOR)) {
+              readme = readme.replace(
+                CRISIS_ANCHOR,
+                `${CHANGELOG_HEADER}\n${entry}\n\n---\n\n${CRISIS_ANCHOR}`
+              );
+            } else {
+              readme += `\n\n---\n\n${CHANGELOG_HEADER}\n${entry}\n`;
+            }
+          }
+
+          fs.writeFileSync(README_PATH, readme, 'utf8');
+          console.log(`README updated — entry: ${entry}`);
+          EOF
+
+      - name: Commit updated README
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          # Only commit if the README actually changed
+          git diff --cached --quiet || git commit -m "docs: auto-update README badges and changelog [skip ci]"
+
+      - name: Push changes
+        uses: ad-m/github-push-action@v0.8.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: main
