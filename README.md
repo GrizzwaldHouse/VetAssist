@@ -360,6 +360,7 @@ npx turbo clean && rm -rf node_modules  # Full clean
 
 | Commit | Date | Change | Author |
 |--------|------|--------|--------|
+| `ab8ee9c` | 2026-04-29 | feat(phase3.6): add VR&E nav link, README changelog section, and auto-update GitHub Action | Marcus Daley |
 | `1b09fd7` | 2026-04-29 | docs: rewrite README with interactive GitHub formatting | Marcus Daley |
 
 ---
