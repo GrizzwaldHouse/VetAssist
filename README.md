@@ -1,85 +1,191 @@
 # VetAssist — Your AI Battle Buddy for VA Benefits
 
-An education and empowerment platform helping veterans understand the benefits they earned through service. Document quality assistant, benefits discovery engine, and veteran community. **Free for all veterans.**
+[![Build](https://img.shields.io/badge/turbo%20build-19%2F19%20packages-brightgreen?style=flat-square)](https://github.com/GrizzwaldHouse/VetAssist)
+[![PII Tests](https://img.shields.io/badge/PII%20tests-22%2F22%20passing-brightgreen?style=flat-square)](https://github.com/GrizzwaldHouse/VetAssist)
+[![Compliance Tests](https://img.shields.io/badge/compliance%20tests-15%2F15%20passing-brightgreen?style=flat-square)](https://github.com/GrizzwaldHouse/VetAssist)
+[![Phase](https://img.shields.io/badge/phase-3%20of%204-blue?style=flat-square)](https://github.com/GrizzwaldHouse/VetAssist)
+[![Free for Veterans](https://img.shields.io/badge/free%20for-all%20veterans-gold?style=flat-square)](https://github.com/GrizzwaldHouse/VetAssist)
+[![License](https://img.shields.io/badge/license-MIT-lightgrey?style=flat-square)](LICENSE)
 
-> **Legal position:** Educational platform under VA OGC 2004 Opinion. Not a law firm, claims filing service, or outcome guarantor.
-
----
-
-## Build Status
-
-| Check | Status |
-|-------|--------|
-| `turbo build` | ✅ 19/19 packages |
-| `test:pii` | ✅ 22/22 passing |
-| `test:compliance` | ✅ 15/15 passing |
-| Phase 1 | ✅ Complete (2026-04-21) |
-| Phase 2 | ✅ Complete (2026-04-21) |
-| Phase 3 | 🟡 5/6 tasks done |
-| Phase 4 | 🔲 Not started |
+> **Not a law firm. Not a claims filer. Not an outcome guarantor.**
+> VetAssist is an educational and empowerment platform — legal position: VA OGC 2004 Opinion.
 
 ---
 
-## What VetAssist Does
+## What Is VetAssist?
 
-| Feature | Status | Description |
-|---------|--------|-------------|
-| AI Chat Assistant | ✅ Live | CFR-aware chat, RAG pipeline, crisis detection, compliance gate |
-| Document Review | ✅ Live | Grammarly-style scoring — Specificity, Completeness, VA Alignment, PII Safety |
-| Inline Diff Review | ✅ Live | Per-span suggestions with accept/reject and full audit trail |
-| Document Upload | ✅ Live | Drag-and-drop, OCR, AES-256 encrypted temp storage, 24h auto-purge |
-| Document Generator | ✅ Live | Guided wizard for VA letters, personal statements, buddy statements |
-| Document Sharing | ✅ Live | Email/SMS/download — PII re-scanned before every share, no share links |
-| Benefits Discovery | ✅ Live | 56 benefits across 10 categories, eligibility checker, hidden gems |
-| Claims Tracker | ✅ Live | Timeline, deadlines, checklist, countdown alerts |
-| Veteran Stories | ✅ Live | Community stories, AI tip extraction, upvotes, 3-layer moderation |
-| Decision Letter Explainer | ✅ Live | Per-condition breakdown, combined rating calculator, appeal options |
-| Learning Hub | ✅ Live | 12 curated resources, AI key takeaways, filter by topic/difficulty |
-| FAQ & Glossary | ✅ Live | 22 FAQ entries, 32 VA terms with CFR links, 5 VA website workarounds |
-| VR&E Chapter 31 Guide | 🔲 Next | Eligibility checker, 4-track explainer, Ch.31 vs Ch.33 comparison |
-| Mobile App | 🔲 Phase 4 | React Native + Expo |
-| Offline Mode | 🔲 Phase 4 | Cached benefits, FAQ, glossary via Service Worker |
+Veterans earned their benefits through service. Getting them shouldn't require a law degree.
+
+VA paperwork is dense, decisions are written in bureaucratic language, and the system is designed for administrators — not the people it serves. Veterans arrive confused, often after being turned away or overwhelmed by VA.gov. Many are dealing with PTSD, TBI, chronic pain, or decades of fighting the system.
+
+**VetAssist is a knowledgeable buddy who's been through the process.** It gives veterans a plain-English AI assistant that understands CFR regulations, scores their documents like Grammarly scores writing, explains exactly what a denial letter decided and why, and shows them what their options are — without needing a lawyer.
+
+Everything is free. Always.
+
+---
+
+## Table of Contents
+
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [Project Structure](#project-structure)
+- [Architecture & Data Flow](#architecture--data-flow)
+- [Tech Stack](#tech-stack)
+- [Safety Rules](#safety-rules)
+- [Environment Variables](#environment-variables)
+- [Commands](#commands)
+- [Build Status & Phase Progress](#build-status--phase-progress)
+- [Crisis Resources](#crisis-resources)
+
+---
+
+## Features
+
+<details>
+<summary><strong>AI Chat Assistant</strong> — CFR-aware chat with RAG pipeline ✅</summary>
+
+The chat assistant is grounded in 38 CFR Parts 3 and 4, VA M21-1 Manual sections, and DBQ forms via a Chroma vector retrieval pipeline. Every response passes through a 6-check Compliance Engine before it reaches the user. Crisis keywords trigger the Veterans Crisis Line banner immediately — non-dismissable.
+
+**What it can do:**
+- Explain what a regulation says in plain English
+- Describe what evidence types are typically relevant to a condition
+- Show veterans what options exist after a denial
+- Write a personal statement using the veteran's own words (structured by AI)
+
+**What it will never do:** tell a veteran what rating they'll get, say "you should file for X condition," or guarantee any outcome.
+
+</details>
+
+<details>
+<summary><strong>Document Review</strong> — Grammarly-style scoring for VA paperwork ✅</summary>
+
+Upload a personal statement, buddy letter, or any VA document and get a scored review across four dimensions:
+
+| Score Axis | What It Measures |
+|---|---|
+| **Specificity** | Are dates, locations, incidents named precisely? |
+| **Completeness** | Does the document cover all required elements? |
+| **VA Alignment** | Does language match what adjudicators look for? |
+| **PII Safety** | Are SSNs and sensitive identifiers properly handled? |
+
+The `ScoreRing` component animates the score visually. Inline suggestions highlight every span that can be improved, with accept/reject controls and a full audit trail. Scoring mode is veteran-configurable: **Encouraging** (default) or **Strict**.
+
+</details>
+
+<details>
+<summary><strong>Document Generator</strong> — Guided wizard for VA letters ✅</summary>
+
+Step-by-step guided wizard that produces VA-ready documents: personal statements, buddy statements, and VA letters. The AI structures the veteran's own words — it doesn't invent content. Every output is reviewed by the Compliance Engine before download.
+
+</details>
+
+<details>
+<summary><strong>Document Upload & Storage</strong> — Encrypted, auto-purged ✅</summary>
+
+- Drag-and-drop upload with OCR (Tesseract.js + TrOCR fallback)
+- AES-256 encrypted temporary storage
+- 24-hour auto-purge by default (30-day max, veteran-configurable)
+- SSNs are auto-redacted with a black-bar overlay before any processing
+- Secure deletion generates a certificate PDF the veteran can download
+
+Accepted formats: PDF, JPEG, PNG, HEIC, TIFF, .docx, .txt
+
+</details>
+
+<details>
+<summary><strong>Benefits Discovery</strong> — 56 benefits across 10 categories ✅</summary>
+
+A searchable hub of 56 VA benefits with plain-English eligibility descriptions, step-by-step instructions, and a "Hidden Gems" section surfacing lesser-known benefits veterans frequently miss. The eligibility checker asks a short set of questions and returns a personalized match list.
+
+</details>
+
+<details>
+<summary><strong>Claims Tracker</strong> — Timeline, deadlines, and countdown alerts ✅</summary>
+
+Track open VA claims with a visual timeline, deadline calculator, and checklist. Countdown alerts surface approaching deadlines without overwhelming the veteran with notifications.
+
+</details>
+
+<details>
+<summary><strong>Decision Letter Explainer</strong> — Per-condition breakdown ✅</summary>
+
+Upload a VA decision letter and get a structured breakdown:
+- What the VA decided for each condition, in plain English
+- Why — what evidence was cited, what was missing
+- Combined rating calculator
+- Appeal options (HLR, Board, Supplemental) with timeframes
+
+</details>
+
+<details>
+<summary><strong>Veteran Stories Community</strong> — 3-layer moderated ✅</summary>
+
+Veterans share outcomes, tips, and experiences. AI extracts the key takeaway from each story for quick scanning. Every post goes through three moderation layers: toxic-bert classifier, PII scrubber, and admin queue. Upvotes, comments, and karma are tracked.
+
+</details>
+
+<details>
+<summary><strong>Learning Hub, FAQ & Glossary</strong> — 12 resources, 22 FAQs, 32 VA terms ✅</summary>
+
+- **Learning Hub:** 12 curated resources with AI-generated key takeaways, filterable by topic and difficulty
+- **FAQ:** 22 entries covering the most common veteran questions
+- **Glossary:** 32 VA terms with plain-English definitions and CFR links
+- **Workarounds:** 5 documented workarounds for common VA.gov pain points
+
+</details>
+
+<details>
+<summary><strong>VR&E Chapter 31 Guide</strong> — Eligibility checker, 4-track explainer 🔲 Next</summary>
+
+Coming in Phase 3.6: a dedicated guide to Vocational Rehabilitation & Employment benefits, covering the 4 program tracks, Chapter 31 vs Chapter 33 comparison, and an eligibility checker.
+
+</details>
+
+<details>
+<summary><strong>Mobile App & Offline Mode</strong> — React Native + Expo 🔲 Phase 4</summary>
+
+React Native (Expo) app with NativeWind styling. Offline mode via Service Worker — cached benefits, FAQ, and glossary available without a connection.
+
+</details>
 
 ---
 
 ## Quick Start
 
 ```bash
-# Install dependencies
+# 1. Install dependencies
 npm install
 
-# Copy environment file and fill in required values
+# 2. Copy env file and fill in required values
 cp environment/.env.example .env
 # Minimum required: DATABASE_URL, CLAUDE_API_KEY
 
-# Start development servers (web :3000, API :3001)
+# 3. Start Chroma vector DB (Docker or local)
+# chroma run --path ./chroma-data
+
+# 4. Run database migrations and seed
+npx prisma migrate dev
+npx prisma db seed
+
+# 5. Start development servers (web :3000, API :3001)
 npx turbo dev
 ```
 
----
-
-## Commands
-
-```bash
-npx turbo dev              # Start all apps in watch mode
-npx turbo build            # Build all packages (run before PR)
-npx turbo test             # Run all tests
-npx turbo test:pii         # PII scrubber tests (22 cases)
-npx turbo test:compliance  # Compliance engine tests (15 cases)
-npx turbo typecheck        # TypeScript check across all packages
-npx turbo lint             # ESLint across all packages
-npx turbo clean && rm -rf node_modules  # Full clean
-```
+> **First time?** See the [Environment Variables](#environment-variables) section for all required keys.
 
 ---
 
 ## Project Structure
 
+<details>
+<summary><strong>Click to expand full directory layout</strong></summary>
+
 ```
 apps/
-  web/        Next.js 14 (App Router) — 14 pages
-  api/        Fastify — 24 API routes
-  mobile/     React Native (Expo) — Phase 4
+  web/          Next.js 14 App Router — 14 pages
+  api/          Fastify — 24 API routes
+  mobile/       React Native (Expo) — Phase 4
+
 packages/
   shared-types/    All TypeScript interfaces
   shared-config/   Named constants, feature flags, app config
@@ -93,78 +199,117 @@ packages/
   knowledge/       Chroma vector DB client + retrieval pipeline
   upload/          UploadService, OCRService, AES-256 encrypted storage
   benefits/        BenefitsService, EligibilityChecker, 56-benefit seed
-  claims/          ClaimsStore, DeadlineCalculator (in-memory MVP)
+  claims/          ClaimsStore, DeadlineCalculator
   community/       CommunityStore, story submission, upvotes
   moderation/      toxic-bert, spam detection, PII scrub, admin queue
-  faq-glossary/    FAQService, GlossaryService, WorkaroundService (in-memory MVP)
+  faq-glossary/    FAQService, GlossaryService, WorkaroundService
   ui-components/   CrisisLineBanner, PIIWarningModal, ScoreRing, AIDisclosureBanner
   auth/            Auth0 integration (scaffolding — Phase 4)
   consent/         Consent engine, data lifecycle (scaffolding — Phase 4)
+
 claude/
   skills/          Prompt engineering skill files + skills-registry.md
   tasks/           Phase task definitions
+
 docs/
-  architecture.md  System architecture, data flows, package boundaries
+  architecture.md          System architecture, data flows, package boundaries
+  security_compliance.md   Regulatory compliance, security policies
+  ui-design-spec.md        Full UI/UX specification
+
 tests/
-  pii-scrubber.test.ts      22 PII detection cases
-  compliance-engine.test.ts 15 compliance/crisis/event cases
+  pii-scrubber.test.ts       22 PII detection cases
+  compliance-engine.test.ts  15 compliance/crisis/event cases
 ```
+
+</details>
 
 ---
 
-## Critical Data Flow (Must Not Break)
+## Architecture & Data Flow
+
+Every user input follows this exact pipeline — no shortcuts, no exceptions:
 
 ```
 USER INPUT
-  → Client PII regex        (packages/pii/)
-  → Server PII middleware   (Presidio + HF NER)
-  → AI pre-processor strip
-  → AI Orchestrator         (packages/ai/)
-  → Compliance Engine       (packages/compliance/) ← mandatory gate
+  → [Layer 1] Client PII regex         packages/pii/
+  → [Layer 2] Server PII middleware     Presidio + HF NER
+  → [Layer 3] AI pre-processor strip   before any text reaches Claude
+  → AI Orchestrator                     packages/ai/
+  → Compliance Engine  ← mandatory gate packages/compliance/
   → USER
 ```
 
-All cross-system communication is event-driven (Observer pattern). Zero polling anywhere.
+All cross-package communication uses the Observer pattern (typed event bus). **Zero polling anywhere.**
+
+<details>
+<summary><strong>Key events in the system</strong></summary>
+
+| Event | Trigger |
+|---|---|
+| `USER_INPUT_RECEIVED` | Any text submission |
+| `PII_DETECTED` | SSN, VA file number, DOB, or credit card found |
+| `AI_RESPONSE_GENERATED` | Claude API returns a response |
+| `COMPLIANCE_PASSED` | Response cleared all 6 compliance checks |
+| `COMPLIANCE_FAILED` | Response blocked — regenerate or show safe fallback |
+| `DATA_DELETION_REQUESTED` | Veteran requests secure wipe |
+
+</details>
+
+<details>
+<summary><strong>Package build order (Turborepo tiers)</strong></summary>
+
+```
+Tier 1 (no internal deps):  shared-types, shared-config
+Tier 2:  shared-utils, auth
+Tier 3:  ai, compliance, consent, moderation
+Tier 4:  community, insights, scraper, archive, notifications, reports
+Tier 5:  ui-components, apps/api, apps/web, apps/mobile
+```
+
+</details>
 
 ---
 
 ## Tech Stack
 
 | Layer | Technology |
-|-------|-----------|
+|---|---|
 | Web | Next.js 14 App Router, TypeScript, Tailwind CSS, shadcn/ui |
 | Mobile | React Native (Expo), NativeWind |
 | API | Fastify, Node.js 20+, Zod |
-| DB | PostgreSQL + Prisma ORM |
+| Database | PostgreSQL + Prisma ORM |
 | Vector DB | Chroma (self-hosted, DigitalOcean) |
-| AI | Anthropic Claude API (sonnet-4-6 + haiku-4-5) |
-| PII | Client regex + Microsoft Presidio + HF `pii-entity-extractor` |
+| AI | Anthropic Claude API (`claude-sonnet-4-6` + `claude-haiku-4-5`) |
+| PII Detection | Client regex + Microsoft Presidio + HF `pii-entity-extractor` |
 | Moderation | HF `unitary/toxic-bert` |
-| OCR | Tesseract.js + `microsoft/trocr-large-printed` |
+| OCR | Tesseract.js + `microsoft/trocr-large-printed` fallback |
 | Auth | Auth0 |
-| Analytics | PostHog (self-hosted, consent-required) |
-| Hosting | Vercel (web) + Railway (API) |
+| Analytics | PostHog (self-hosted, consent-required, anonymous only) |
+| Web Hosting | Vercel |
+| API Hosting | Railway |
 | CI/CD | GitHub Actions |
 | Monorepo | Turborepo |
 
 ---
 
-## Non-Negotiable Safety Rules
+## Safety Rules
 
-- **PII scrubber on every text input and file upload** — zero exceptions
-- **Crisis keywords trigger Veterans Crisis Line immediately** — `CrisisLineBanner` is non-dismissable
-- **All AI responses pass through Compliance Engine** before reaching the user
+These are non-negotiable and enforced at the code level, not by convention.
+
+- **PII scrubber runs on every text input and file upload** — zero exceptions, three layers
+- **Crisis keywords trigger the Veterans Crisis Line banner immediately** — `CrisisLineBanner` is non-dismissable on every screen
+- **All AI responses pass through the Compliance Engine** before reaching the user — crisis, medical advice, legal advice, and outcome guarantee detection
 - **AI disclosure banner on every AI-powered screen** — `AIDisclosureBanner` component
-- **SSNs never stored, logged, or sent to AI** — redact first, log event type + timestamp only
+- **SSNs are never stored, logged, or sent to the AI** — redact first, log only event type + timestamp
 
 ---
 
 ## Environment Variables
 
-Copy `environment/.env.example` to `.env`. Key variables:
+Copy `environment/.env.example` to `.env`. The file documents all 121 variables.
 
 | Variable | Required | Purpose |
-|----------|----------|---------|
+|---|---|---|
 | `DATABASE_URL` | Yes | PostgreSQL connection string |
 | `CLAUDE_API_KEY` | Yes | Anthropic Claude API |
 | `CHROMA_URL` | Yes | Chroma vector DB for RAG |
@@ -172,27 +317,47 @@ Copy `environment/.env.example` to `.env`. Key variables:
 | `ENCRYPTION_KEY` | Yes | AES-256 key for uploaded document storage |
 | `AUTH0_DOMAIN` | Phase 4 | Auth0 tenant domain |
 
-See `environment/.env.example` for all 121 variables with descriptions.
+---
+
+## Commands
+
+```bash
+npx turbo dev              # Start all apps in watch mode (web :3000, API :3001)
+npx turbo build            # Build all packages — run before any PR
+npx turbo test             # Full test suite across all packages
+npx turbo test:pii         # PII scrubber tests (22 cases)
+npx turbo test:compliance  # Compliance engine tests (15 cases)
+npx turbo typecheck        # TypeScript strict mode check across all packages
+npx turbo lint             # ESLint across all packages
+npx turbo clean && rm -rf node_modules  # Full clean
+```
 
 ---
 
-## Phase Progress
+## Build Status & Phase Progress
 
-| Phase | Status | Description |
-|-------|--------|-------------|
-| Phase 1 | ✅ Complete | Monorepo, PII, compliance, API server, chat, web UI |
-| Phase 2 | ✅ Complete | Upload, benefits, document review, generator, claims, sharing |
+| Check | Status |
+|---|---|
+| `turbo build` | ✅ 19/19 packages |
+| `test:pii` | ✅ 22/22 passing |
+| `test:compliance` | ✅ 15/15 passing |
+
+| Phase | Status | Scope |
+|---|---|---|
+| Phase 1 | ✅ Complete | Monorepo, PII scrubber, compliance engine, API server, AI chat, web UI |
+| Phase 2 | ✅ Complete | Upload, benefits discovery, document review, generator, claims tracker, sharing |
 | Phase 3 | 🟡 5/6 done | Community, moderation, decision letter, learning hub, FAQ/glossary |
-| Phase 4 | 🔲 Not started | Mobile, offline, data deletion, analytics, CI/CD |
+| Phase 4 | 🔲 Not started | Mobile app, offline mode, data deletion, analytics dashboard, CI/CD |
 
-**Next task:** Phase 3.6 — VR&E Chapter 31 Guide
-Full progress details in `.vetassist-progress.json`.
+**Next task:** Phase 3.6 — VR&E Chapter 31 Guide. Full progress in `.vetassist-progress.json`.
 
 ---
 
 ## Crisis Resources
 
-If you are a veteran in crisis: **Call 988, Press 1** | Text 838255 | Chat at VeteransCrisisLine.net
+If you are a veteran in crisis:
+
+**Call 988, then press 1** | Text **838255** | Chat at [VeteransCrisisLine.net](https://www.veteranscrisisline.net)
 
 ---
 
