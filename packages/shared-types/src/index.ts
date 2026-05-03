@@ -24,6 +24,7 @@ export type {
   ComplianceViolationType,
   ComplianceResult,
   ComplianceCheck,
+  ComplianceStateRule,
   // Document scoring
   ScoreCategoryName,
   ScoreCategory,
@@ -69,6 +70,17 @@ export type {
   ShareChannel,
   ShareRequest,
   ShareResult,
+  // Accredited boundary
+  UserRole,
+  AccreditationStatus,
+  Accreditation,
+  UserContext,
+  RouteRiskLevel,
+  RoutePolicy,
+  AccessRequestContext,
+  AccessDecision,
+  ComplianceAuditLog,
+  StateRestrictionConfig,
   // Request classifier
   RequestType,
   ClassifiedRequest,
@@ -98,6 +110,20 @@ export type {
   LearningDifficultyLevel,
   LearningResource,
   LearningHubResponse,
+  // Data destruction
+  DeletionStep,
+  DeletionProgress,
+  WipeMethod,
+  DeletionCertificate,
+  DataDestructionResult,
+  // Offline
+  OfflineStatus,
+  DocumentDraft,
+  // Analytics
+  AnalyticsEvent,
+  AnalyticsConsent,
+  UsageAggregates,
+  GrantReport,
 } from './types.js';
 
 export type {
@@ -125,3 +151,18 @@ export type {
   FAQListResponse,
   GlossaryListResponse,
 } from './faq-glossary-types.js';
+
+export type {
+  // VR&E Chapter 31 Guide
+  VREDischargeType,
+  VREEligibilityInput,
+  VREEligibilityStatus,
+  VREEligibilityResult,
+  VRETrackId,
+  VRETrackProCon,
+  VRETrack,
+  VREComparisonRow,
+  VREComparison,
+  VREApplicationStep,
+  VREGuideResponse,
+} from './vre-types.js';

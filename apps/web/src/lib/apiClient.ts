@@ -45,6 +45,16 @@ import type {
   LearningResourceType,
   LearningDifficultyLevel,
   LearningHubResponse,
+  VREGuideResponse,
+  VREEligibilityInput,
+  VREEligibilityResult,
+  VRETrack,
+  VRETrackId,
+  VREDischargeType,
+  AnalyticsEvent,
+  AnalyticsConsent,
+  UsageAggregates,
+  GrantReport,
 } from '@vetassist/shared-types';
 
 // Re-export shared types so callers can import them from a single apiClient import
@@ -95,6 +105,18 @@ export type {
   GlossaryTerm,
   GlossaryListResponse,
   VAWorkaround,
+  // VR&E Chapter 31 types
+  VREGuideResponse,
+  VREEligibilityInput,
+  VREEligibilityResult,
+  VRETrack,
+  VRETrackId,
+  VREDischargeType,
+  // Analytics types
+  AnalyticsEvent,
+  AnalyticsConsent,
+  UsageAggregates,
+  GrantReport,
 };
 
 const API_BASE = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001/api';
@@ -681,6 +703,96 @@ async function getWorkarounds(): Promise<VAWorkaround[]> {
   return response.json() as Promise<VAWorkaround[]>;
 }
 
+async function getVREGuide(): Promise<VREGuideResponse> {
+  const response = await fetch(`${API_BASE}/vre/guide`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({ message: 'Unknown error' }));
+    throw new ApiError(response.status, (body as { message?: string }).message ?? 'Failed to load VR&E guide');
+  }
+
+  return response.json() as Promise<VREGuideResponse>;
+}
+
+async function checkVREEligibility(input: VREEligibilityInput): Promise<VREEligibilityResult> {
+  const params = new URLSearchParams({
+    disabilityRating:        String(input.disabilityRating),
+    hasMemorandumRating:     String(input.hasMemorandumRating),
+    dischargeType:           input.dischargeType,
+    hasEmploymentHandicap:   String(input.hasEmploymentHandicap),
+    separationWithin12Years: String(input.separationWithin12Years),
+  });
+
+  const response = await fetch(`${API_BASE}/vre/eligibility?${params.toString()}`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({ message: 'Unknown error' }));
+    throw new ApiError(response.status, (body as { message?: string }).message ?? 'Eligibility check failed');
+  }
+
+  return response.json() as Promise<VREEligibilityResult>;
+}
+
+// ── Analytics API methods ──────────────────────────────────────────────────────
+
+async function updateAnalyticsConsent(consent: { analytics: boolean; sessionId: string }): Promise<void> {
+  const response = await fetch(`${API_BASE}/analytics/consent`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(consent),
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({ message: 'Unknown error' }));
+    throw new ApiError(response.status, (body as { message?: string }).message ?? 'Consent update failed');
+  }
+}
+
+async function getAdminDashboard(from: string, to: string): Promise<UsageAggregates> {
+  const params = new URLSearchParams({ from, to });
+  const response = await fetch(`${API_BASE}/admin/analytics/dashboard?${params.toString()}`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({ message: 'Unknown error' }));
+    throw new ApiError(response.status, (body as { message?: string }).message ?? 'Dashboard fetch failed');
+  }
+  const data = await response.json() as { aggregates: UsageAggregates };
+  return data.aggregates;
+}
+
+async function generateGrantReport(from: string, to: string): Promise<GrantReport> {
+  const params = new URLSearchParams({ from, to });
+  const response = await fetch(`${API_BASE}/admin/analytics/report?${params.toString()}`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({ message: 'Unknown error' }));
+    throw new ApiError(response.status, (body as { message?: string }).message ?? 'Report generation failed');
+  }
+  return response.json() as Promise<GrantReport>;
+}
+
+async function getImpactMetrics(): Promise<{ aggregates: UsageAggregates; periodStart: string; periodEnd: string }> {
+  const response = await fetch(`${API_BASE}/analytics/impact`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({ message: 'Unknown error' }));
+    throw new ApiError(response.status, (body as { message?: string }).message ?? 'Impact fetch failed');
+  }
+  return response.json() as Promise<{ aggregates: UsageAggregates; periodStart: string; periodEnd: string }>;
+}
+
 export const apiClient = {
   sendChat,
   reviewDocument,
@@ -713,4 +825,10 @@ export const apiClient = {
   searchGlossary,
   getGlossaryByLetter,
   getWorkarounds,
+  getVREGuide,
+  checkVREEligibility,
+  updateAnalyticsConsent,
+  getAdminDashboard,
+  generateGrantReport,
+  getImpactMetrics,
 } as const;

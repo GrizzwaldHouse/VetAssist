@@ -62,6 +62,8 @@ export interface CrisisResult {
   readonly isCrisis: boolean;
   readonly confidence: number;
   readonly matchedPhrases: readonly string[];
+  // Which detection tier triggered: 0=none, 1=hard-regex, 2=phrase-match, 3=MentalRoBERTa
+  readonly tier: 0 | 1 | 2 | 3;
 }
 
 // ─── Legal Boundary ───────────────────────────────────────────────────────────
@@ -87,7 +89,8 @@ export type ComplianceViolationType =
   | 'guaranteed_outcome'
   | 'exaggeration_language'
   | 'pii_in_response'
-  | 'crisis_keywords';
+  | 'crisis_keywords'
+  | 'state_specific_language';
 
 export interface ComplianceCheck {
   readonly type: ComplianceViolationType;
@@ -100,6 +103,16 @@ export interface ComplianceResult {
   readonly checks: readonly ComplianceCheck[];
   readonly modifiedText: string;
   readonly disclaimerAppended: boolean;
+}
+
+// One substitution rule for state-specific AI response language compliance
+export interface ComplianceStateRule {
+  // Human-readable label for audit logs and test output
+  readonly description: string;
+  // Pattern to match in AI response text — must be global flag; reset lastIndex after use
+  readonly pattern: RegExp;
+  // Text to replace the full match with
+  readonly replacement: string;
 }
 
 // ─── Document Scoring ─────────────────────────────────────────────────────────
@@ -284,6 +297,13 @@ export interface EventPayloadMap {
   readonly OCR_COMPLETED: { readonly documentId: string; readonly charCount: number };
   readonly DOCUMENT_DELETED: { readonly documentId: string; readonly reason: 'user_request' | 'ttl_expired' };
   readonly DOCUMENT_GENERATED: { readonly sessionId: string; readonly docType: string };
+  readonly ACCESS_EVALUATED: ComplianceAuditLog;
+  readonly DELETION_STARTED: { readonly documentId: string; readonly documentTitle: string };
+  readonly DELETION_STEP_PROGRESS: DeletionProgress;
+  readonly DELETION_COMPLETE: { readonly documentId: string; readonly certificateId: string };
+  ANALYTICS_CONSENT_GRANTED: { readonly sessionId: string; readonly timestamp: string };
+  ANALYTICS_CONSENT_REVOKED: { readonly sessionId: string; readonly timestamp: string };
+  ANALYTICS_EVENT_CAPTURED: AnalyticsEvent;
 }
 
 export type VetAssistEvent = keyof EventPayloadMap;
@@ -559,6 +579,84 @@ export interface LearningHubResponse {
   readonly totalCount: number;
 }
 
+// ─── Accredited Boundary ─────────────────────────────────────────────────────
+
+export type UserRole =
+  | 'guest'
+  | 'authenticated'
+  | 'verified_veteran'
+  | 'moderator'
+  | 'admin'
+  | 'accredited_representative';
+
+// VA accreditation is revocable, expirable, and authority-bound
+export type AccreditationStatus = 'none' | 'pending' | 'verified' | 'revoked' | 'expired';
+
+export interface Accreditation {
+  readonly status: AccreditationStatus;
+  readonly verifiedAt?: string;  // ISO-8601 — Date serializes poorly across service boundaries
+  readonly expiresAt?: string;
+  // Only VA OGC is a valid granting authority for this platform
+  readonly authority: 'VA_OGC';
+}
+
+export interface UserContext {
+  readonly id: string;
+  readonly role: UserRole;
+  readonly state?: string;
+  readonly country?: string;
+  // Convenience flag derived from accreditation.status === 'verified' — never set independently
+  readonly isAccredited: boolean;
+  readonly accreditation?: Accreditation;
+}
+
+// Policy record for a single route — central registry, never hardcoded per-engine
+export type RouteRiskLevel = 'low' | 'medium' | 'high';
+
+export interface RoutePolicy {
+  readonly requiresAccreditation: boolean;
+  readonly riskLevel: RouteRiskLevel;
+}
+
+export interface AccessRequestContext {
+  readonly user: UserContext;
+  readonly accreditedServiceEnabled: boolean;
+  readonly route: string;
+}
+
+export interface AccessDecision {
+  readonly allowed: boolean;
+  readonly reason?: string;
+}
+
+// Audit log entry — written on every access decision for legally traceable enforcement
+export interface ComplianceAuditLog {
+  readonly userId: string;
+  readonly route: string;
+  readonly decision: 'allowed' | 'blocked';
+  readonly reason: string;
+  readonly timestamp: string;  // ISO-8601
+}
+
+// State codes (two-letter uppercase) where the accredited advisory service is not yet launched
+export interface StateRestrictionConfig {
+  readonly restrictedStates: ReadonlySet<string>;
+}
+
+// ─── Offline / Document Drafts ───────────────────────────────────────────────
+
+export interface DocumentDraft {
+  readonly key: string;
+  readonly content: string;
+  readonly savedAt: string; // ISO-8601 timestamp
+  readonly synced: boolean;
+}
+
+export interface OfflineStatus {
+  readonly isOnline: boolean;
+  readonly wasOffline: boolean;
+}
+
 // ─── Request Classifier ───────────────────────────────────────────────────────
 
 export type RequestType = 'chat' | 'document_review' | 'decision_letter' | 'document_write' | 'story_build';
@@ -567,4 +665,79 @@ export interface ClassifiedRequest {
   readonly type: RequestType;
   readonly confidence: number;
   readonly skillId: SkillId;
+}
+
+// ─── Data Destruction ─────────────────────────────────────────────────────────
+
+// Discrete steps the deletion pipeline emits — drives the animated progress bar
+export type DeletionStep =
+  | 'pii_rescan'
+  | 'overwrite'
+  | 'delete'
+  | 'certificate_generation'
+  | 'complete';
+
+export interface DeletionProgress {
+  readonly documentId: string;
+  readonly step: DeletionStep;
+  // 0–100 integer — each step maps to a fixed range so the bar moves smoothly
+  readonly percentComplete: number;
+  readonly message: string;
+}
+
+// Wipe method recorded on the certificate — extensible if DoD 5220.22-M is added later
+export type WipeMethod = 'overwrite_zeros_then_delete';
+
+export interface DeletionCertificate {
+  readonly certificateId: string;
+  readonly documentId: string;
+  readonly documentTitle: string;
+  // Comma-separated list of data types destroyed, e.g. "extracted_text, encrypted_buffer"
+  readonly dataTypesDestroyed: readonly string[];
+  readonly wipeMethod: WipeMethod;
+  readonly deletedAt: string;   // ISO-8601
+  readonly issuedAt: string;    // ISO-8601
+}
+
+export interface DataDestructionResult {
+  readonly success: boolean;
+  readonly documentId: string;
+  readonly certificate: DeletionCertificate | null;
+  // base64-encoded PDF bytes — client decodes and triggers browser download
+  readonly certificatePdfBase64: string | null;
+  readonly message: string;
+}
+
+// ─── Analytics ────────────────────────────────────────────────────────────────
+
+export interface AnalyticsEvent {
+  readonly name: string;
+  readonly properties: Readonly<Record<string, string | number | boolean>>;
+  // pseudonymous — never userId
+  readonly sessionId: string;
+  readonly timestamp: string;
+}
+
+export interface AnalyticsConsent {
+  readonly analytics: boolean;
+  readonly consentedAt: string | null;
+}
+
+export interface UsageAggregates {
+  readonly veteransServed: number;
+  readonly documentsReviewed: number;
+  readonly benefitsDiscovered: number;
+  readonly decisionLettersAnalyzed: number;
+  readonly crisisDetections: number;
+  readonly accessibilitySessions: number;
+  readonly communityStoriesSubmitted: number;
+}
+
+export interface GrantReport {
+  readonly reportId: string;
+  readonly generatedAt: string;
+  readonly periodStart: string;
+  readonly periodEnd: string;
+  readonly aggregates: UsageAggregates;
+  readonly pdfBase64: string;
 }

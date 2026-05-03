@@ -81,3 +81,52 @@ export const BENEFITS_CONFIG = {
   hiddenGemsCount: 5,
   defaultCategory: 'all' as const,
 } as const;
+
+// US state codes where the accredited advisory service is not yet launched
+// Single source of truth — import from here, never duplicate this set
+export const RESTRICTED_STATES: ReadonlySet<string> = new Set([
+  'AK',
+  'HI',
+  'MT',
+  'ND',
+  'SD',
+  'WY',
+  'VT',
+]);
+
+export const ANALYTICS_CONFIG = {
+  consentStorageKey: 'vetassist_analytics_consent',
+  sessionIdStorageKey: 'vetassist_session_id',
+  flushIntervalMs: 30_000,
+  maxQueueSize: 100,
+} as const;
+
+export const ANALYTICS_EVENTS = {
+  // Document Review
+  DOCUMENT_REVIEW_INITIATED: 'document_review_initiated',
+  DOCUMENT_SCORE_RETURNED: 'document_score_returned',
+  SUGGESTION_ACCEPTED: 'suggestion_accepted',
+  SUGGESTION_REJECTED: 'suggestion_rejected',
+  // Benefits
+  BENEFITS_SEARCH_PERFORMED: 'benefits_search_performed',
+  BENEFIT_DETAIL_VIEWED: 'benefit_detail_viewed',
+  ELIGIBILITY_CHECKER_COMPLETED: 'eligibility_checker_completed',
+  // Decision Letter
+  DECISION_LETTER_UPLOADED: 'decision_letter_uploaded',
+  DECISION_LETTER_EXPLAINED: 'decision_letter_explained',
+  APPEAL_OPTION_VIEWED: 'appeal_option_viewed',
+  // Community
+  STORY_SUBMITTED: 'story_submitted',
+  STORY_UPVOTED: 'story_upvoted',
+  // VR&E
+  VRE_GUIDE_ACCESSED: 'vre_guide_accessed',
+  VRE_ELIGIBILITY_COMPLETED: 'vre_eligibility_completed',
+  // Accessibility
+  ACCESSIBILITY_FEATURE_ACTIVATED: 'accessibility_feature_activated',
+  // Offline
+  OFFLINE_MODE_ENTERED: 'offline_mode_entered',
+  // Crisis
+  CRISIS_DETECTED_AND_HANDLED: 'crisis_detected_and_handled',
+} as const;
+
+export type AnalyticsEventName = typeof ANALYTICS_EVENTS[keyof typeof ANALYTICS_EVENTS];

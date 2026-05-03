@@ -18,6 +18,11 @@ import { communityRoute } from './routes/community.js';
 import { decisionLetterRoute } from './routes/decision-letter.js';
 import { learningHubRoute } from './routes/learning-hub.js';
 import { faqGlossaryRoute } from './routes/faq-glossary.js';
+import { vreRoute } from './routes/vre.js';
+import { advisoryRoute } from './routes/advisory.js';
+import { draftsRoute } from './routes/drafts.js';
+import { destructionRoute } from './routes/destruction.js';
+import { analyticsRoute } from './routes/analytics.js';
 
 const PORT = parseInt(process.env['PORT'] ?? '3001', 10);
 const HOST = process.env['HOST'] ?? '0.0.0.0';
@@ -55,6 +60,11 @@ async function bootstrap(): Promise<void> {
   await server.register(decisionLetterRoute, { prefix: '/api' });
   await server.register(learningHubRoute, { prefix: '/api' });
   await server.register(faqGlossaryRoute, { prefix: '/api' });
+  await server.register(vreRoute, { prefix: '/api' });
+  await server.register(advisoryRoute, { prefix: '/api' });
+  await server.register(draftsRoute, { prefix: '/api' });
+  await server.register(destructionRoute, { prefix: '/api' });
+  await server.register(analyticsRoute, { prefix: '/api' });
 
   server.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
 

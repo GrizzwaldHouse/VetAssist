@@ -1,7 +1,7 @@
 // LayoutShell.tsx
 // Developer: Marcus Daley
 // Date: 2026-04-21
-// Purpose: Client-boundary wrapper for interactive layout elements — NavSidebar, AccessibilityControls, CrisisLineBanner
+// Purpose: Client-boundary wrapper for interactive layout elements — NavSidebar, AccessibilityControls, CrisisLineBanner, OfflineIndicator
 
 'use client';
 
@@ -11,6 +11,8 @@ import React from 'react';
 import { CrisisLineBanner }    from '@vetassist/ui-components/src/CrisisLineBanner.js';
 import { NavSidebar }          from '@vetassist/ui-components/src/NavSidebar.js';
 import { AccessibilityControls } from '@vetassist/ui-components/src/AccessibilityControls.js';
+import { OfflineIndicator }    from './OfflineIndicator.js';
+import { PostHogProvider }    from '../lib/PostHogProvider.js';
 
 // Nav structure constant — no magic strings in JSX
 const NAV_SECTIONS = [
@@ -31,6 +33,7 @@ const NAV_SECTIONS = [
       { id: 'learn',   label: 'Learn',      href: '/learn',    icon: '✦' },
       { id: 'faq',     label: 'FAQ',         href: '/faq',      icon: '?' },
       { id: 'vre',     label: 'VR&E Ch.31',  href: '/vre',      icon: '◈' },
+      { id: 'impact',  label: 'Our Impact',  href: '/impact',   icon: '◉' },
     ],
   },
   {
@@ -66,25 +69,30 @@ interface LayoutShellProps {
 
 export function LayoutShell({ children }: LayoutShellProps) {
   return (
-    <div style={rootStyle}>
-      {/* Crisis line — non-dismissable, highest z-index */}
-      <CrisisLineBanner />
+    <PostHogProvider>
+      <div style={rootStyle}>
+        {/* Offline indicator — shown when browser loses network, hidden when online */}
+        <OfflineIndicator />
 
-      <div style={bodyRowStyle}>
-        {/* Left sidebar — active item derived from current pathname */}
-        <NavSidebar
-          sections={NAV_SECTIONS}
-          activeItemId=""
-        />
+        {/* Crisis line — non-dismissable, highest z-index */}
+        <CrisisLineBanner />
 
-        {/* Page content landmark */}
-        <main id="main-content" style={mainStyle}>
-          {children}
-        </main>
+        <div style={bodyRowStyle}>
+          {/* Left sidebar — active item derived from current pathname */}
+          <NavSidebar
+            sections={NAV_SECTIONS}
+            activeItemId=""
+          />
+
+          {/* Page content landmark */}
+          <main id="main-content" style={mainStyle}>
+            {children}
+          </main>
+        </div>
+
+        {/* Accessibility FAB — fixed position, outside document flow */}
+        <AccessibilityControls />
       </div>
-
-      {/* Accessibility FAB — fixed position, outside document flow */}
-      <AccessibilityControls />
-    </div>
+    </PostHogProvider>
   );
 }

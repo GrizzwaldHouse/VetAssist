@@ -136,17 +136,19 @@ Skill files in `claude/skills/` define the prompt engineering for each AI featur
 
 Progress tracked in `.vetassist-progress.json`. Update task status (`not_started` → `in_progress` → `completed`) as work completes. Never regenerate files that already exist and pass validation.
 
-**Current status (2026-04-26):**
+**Current status (2026-05-01):**
 - Phase 1 — COMPLETE (13 packages, PII + compliance tests passing)
 - Phase 2 — COMPLETE (upload, benefits, document review, generator, claims, sharing)
-- Phase 3 — IN PROGRESS: 5/6 tasks done. Next: Task 3.6 VR&E Chapter 31 Guide
-- Phase 4 — NOT STARTED (mobile, offline, analytics, CI/CD)
+- Phase 3 — COMPLETE (6/6 tasks done — community, moderation, decision letter, learning hub, FAQ/glossary, VR&E)
+- Phase 4 — IN PROGRESS: 4/6 tasks done. Next: Task 4.5 VA Update System
 
-**Built packages (19 total):** shared-types, shared-config, shared-utils, events, pii, crisis, legal, compliance, ai, knowledge, upload, benefits, claims, community, moderation, ui-components, auth (scaffolding), consent (scaffolding), faq-glossary (in-memory MVP)
+**Built packages (20 total):** shared-types, shared-config, shared-utils, events, pii, crisis, legal, compliance, ai, knowledge, upload, benefits, claims, community, moderation, ui-components, auth (scaffolding), consent (scaffolding), faq-glossary (in-memory MVP), insights
 
-**Built web pages:** /, /chat, /settings, /documents, /discover, /discover/[id], /generate, /tracker, /community, /community/submit, /decision-letter, /learn, /faq, /glossary
+**Built web pages:** /, /chat, /settings, /documents, /discover, /discover/[id], /generate, /tracker, /community, /community/submit, /decision-letter, /learn, /faq, /glossary, /vre, /impact, /admin/analytics
 
-**Built API routes:** /api/chat, /api/documents/review, /api/documents/review/inline, /api/documents/upload, /api/documents/generate, /api/documents/share, /api/documents/decision-letter, /api/benefits, /api/benefits/search, /api/benefits/hidden-gems, /api/benefits/:id, /api/benefits/eligibility, /api/claims, /api/community/stories, /api/community/admin/queue, /api/learning, /api/faq, /api/glossary, /api/workarounds
+**Built API routes:** /api/chat, /api/documents/review, /api/documents/review/inline, /api/documents/upload, /api/documents/generate, /api/documents/share, /api/documents/decision-letter, /api/benefits, /api/benefits/search, /api/benefits/hidden-gems, /api/benefits/:id, /api/benefits/eligibility, /api/claims, /api/community/stories, /api/community/admin/queue, /api/learning, /api/faq, /api/glossary, /api/workarounds, /api/analytics/consent, /api/analytics/consent/:sid, /api/analytics/events, /api/analytics/impact, /api/admin/analytics/dashboard, /api/admin/analytics/report
+
+- Brainstorm scope: docs/BRAINSTORM_2026-05-01.md (locked 2026-05-01)
 
 **Phase task definitions:**
 - `claude/tasks/phase1_foundation.md` — Monorepo, PII scrubber, compliance engine, API, chat, basic web UI
