@@ -15,6 +15,22 @@ PATCH_FILE="$REPO_ROOT/.ollama-guard-patch.diff"
 LINECOUNT_FILE="$REPO_ROOT/.ollama-guard-linecount.txt"
 SUMMARY_FILE="$REPO_ROOT/.ollama-guard-summary.txt"
 
+prompt_from_tty() {
+  local prompt="$1"
+  local default_choice="$2"
+  local choice
+
+  if [[ -r /dev/tty ]]; then
+    printf "%s" "$prompt" > /dev/tty
+    read -r choice < /dev/tty
+    printf "%s" "${choice:-$default_choice}"
+    return 0
+  fi
+
+  echo "ollama-guard needs an interactive terminal for this decision; defaulting to abort." >&2
+  printf "%s" "$default_choice"
+}
+
 # Read commit pattern from config
 LOCAL_COMMIT_PATTERN="fix(ollama-local): %s"
 if [[ -f "$CONFIG_FILE" ]]; then
@@ -58,10 +74,7 @@ case $EXIT_CODE in
       cat "$SUMMARY_FILE"
     fi
     echo ""
-    # Open interactive terminal for decision (works on Windows via Git Bash)
-    exec < /dev/tty
-    printf "What would you like to do?\n  [s]kip — push anyway (CI will catch it)\n  [A]bort — abort the push\n\nChoice [s/A]: "
-    read -r CHOICE < /dev/tty
+    CHOICE=$(prompt_from_tty "What would you like to do?\n  [s]kip -- push anyway (CI will catch it)\n  [A]bort -- abort the push\n\nChoice [s/A]: " "A")
     case "${CHOICE:-A}" in
       s|S) echo "⚠️  Pushing with known errors — CI will flag them"; exit 0 ;;
       *)   echo "🚫 Push aborted"; exit 1 ;;
@@ -88,10 +101,7 @@ case $EXIT_CODE in
     echo "─────────────────────────────────────────────────────"
     echo ""
 
-    # Open /dev/tty for interactive prompt even when stdin is piped (git hook context)
-    exec < /dev/tty
-    printf "Apply this fix?\n  [a]pply — apply patch, commit as '%s', then push\n  [s]kip  — skip fix, push as-is\n  [A]bort — abort push entirely\n\nChoice [a/s/A]: " "$(printf "$LOCAL_COMMIT_PATTERN" "auto-fix errors")"
-    read -r CHOICE < /dev/tty
+    CHOICE=$(prompt_from_tty "Apply this fix?\n  [a]pply -- apply patch, commit as '$(printf "$LOCAL_COMMIT_PATTERN" "auto-fix errors")', then push\n  [s]kip  -- skip fix, push as-is\n  [A]bort -- abort push entirely\n\nChoice [a/s/A]: " "A")
 
     case "${CHOICE:-A}" in
       a|A-lower)
@@ -110,8 +120,7 @@ case $EXIT_CODE in
           exit 0
         else
           echo "⚠️  Patch failed to apply cleanly — fix manually or skip"
-          printf "\n  [s]kip — push as-is\n  [A]bort — abort push\n\nChoice [s/A]: "
-          read -r FALLBACK < /dev/tty
+          FALLBACK=$(prompt_from_tty "\n  [s]kip -- push as-is\n  [A]bort -- abort push\n\nChoice [s/A]: " "A")
           case "${FALLBACK:-A}" in
             s|S) exit 0 ;;
             *)   exit 1 ;;

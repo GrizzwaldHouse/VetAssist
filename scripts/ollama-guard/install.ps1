@@ -13,109 +13,138 @@ $HooksDir     = Join-Path $RepoRoot ".git\hooks"
 $GuardDir     = Join-Path $RepoRoot "scripts\ollama-guard"
 $ConfigDest   = Join-Path $RepoRoot ".ollama-guard.yml"
 $ConfigTmpl   = Join-Path $GuardDir ".ollama-guard.yml.template"
+$ModelCatalog = Join-Path $GuardDir "model-catalog.txt"
 $HookFile     = Join-Path $HooksDir "pre-push"
 
 Write-Host ""
-Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+Write-Host "-------------------------------------------"
 Write-Host "  ollama-guard installer (Windows)"
-Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+Write-Host "-------------------------------------------"
 Write-Host ""
 
-# ── 1. Check git repo ─────────────────────────────────────────────────────────
+# -- 1. Check git repo --------------------------------------------------------
 if (-not (Test-Path (Join-Path $RepoRoot ".git"))) {
-    Write-Host "❌ Not a git repository — run from inside a git repo"
+    Write-Host "[FAIL] Not a git repository -- run from inside a git repo"
     exit 1
 }
-Write-Host "✅ Git repo: $RepoRoot"
+Write-Host "[OK] Git repo: $RepoRoot"
 
-# ── 2. Check Ollama ───────────────────────────────────────────────────────────
+# -- 2. Check Ollama ----------------------------------------------------------
 $ollamaPath = Get-Command ollama -ErrorAction SilentlyContinue
 if (-not $ollamaPath) {
     Write-Host ""
-    Write-Host "❌ Ollama is not installed."
+    Write-Host "[FAIL] Ollama is not installed."
     Write-Host "   Download from: https://ollama.com/download"
     Write-Host "   Then re-run this installer."
     exit 1
 }
-Write-Host "✅ Ollama: found at $($ollamaPath.Source)"
+Write-Host "[OK] Ollama: found at $($ollamaPath.Source)"
 
-# ── 3. Read model from config ─────────────────────────────────────────────────
-$Model         = "codellama:7b"
-$FallbackModel = "deepseek-coder:6.7b"
+# -- 3. Read model from config ------------------------------------------------
+$Model         = ""
+$FallbackModel = ""
 if (Test-Path $ConfigDest) {
     $cfgContent = Get-Content $ConfigDest -Raw
     if ($cfgContent -match '(?m)^model:\s*"?([^\s"#]+)') { $Model = $Matches[1] }
     if ($cfgContent -match '(?m)^fallback_model:\s*"?([^\s"#]+)') { $FallbackModel = $Matches[1] }
 }
 
-# ── 4. Check / pull model ─────────────────────────────────────────────────────
-$installedModels = ollama list 2>$null
-if ($installedModels -notmatch [regex]::Escape($Model)) {
-    Write-Host ""
-    Write-Host "⚠️  Model '$Model' is not installed."
-    $pullChoice = Read-Host "   Pull it now? (~4GB download) [y/N]"
-    if ($pullChoice -match '^[yY]$') {
-        Write-Host "   Pulling $Model..."
-        ollama pull $Model
-        Write-Host "✅ Model pulled: $Model"
-    } else {
-        Write-Host "   Checking fallback '$FallbackModel'..."
-        if ($installedModels -notmatch [regex]::Escape($FallbackModel)) {
-            $pullFb = Read-Host "   Pull fallback '$FallbackModel'? [y/N]"
-            if ($pullFb -match '^[yY]$') {
-                ollama pull $FallbackModel
-                Write-Host "✅ Fallback pulled: $FallbackModel"
-            } else {
-                Write-Host "⚠️  No model available — guard will skip until a model is installed"
-            }
-        } else {
-            Write-Host "✅ Fallback already installed: $FallbackModel"
-        }
-    }
-} else {
-    Write-Host "✅ Model: $Model (installed)"
+# -- 4. Check / pull model ----------------------------------------------------
+function Get-InstalledOllamaModels {
+    $rows = (& ollama list 2>$null) | Select-Object -Skip 1
+    return @($rows | ForEach-Object {
+        ($_ -split '\s+')[0]
+    } | Where-Object { $_ })
 }
 
-# ── 5. Copy config template ───────────────────────────────────────────────────
+function Test-ModelInstalled {
+    param([string]$Name, [string[]]$Installed)
+    return -not [string]::IsNullOrWhiteSpace($Name) -and $Installed -contains $Name
+}
+
+function Get-ModelCatalog {
+    if (Test-Path $ModelCatalog) {
+        return @(Get-Content $ModelCatalog | Where-Object {
+            $_ -and ($_ -notmatch '^\s*#')
+        })
+    }
+    return @("codellama:7b", "deepseek-coder:6.7b", "codellama:13b", "llama3:8b", "qwen2.5-coder:7b", "llama3.1:8b")
+}
+
+function Install-ModelFromCatalog {
+    $catalog = @(Get-ModelCatalog)
+    Write-Host ""
+    Write-Host "No Ollama models are installed. Pick a model to install:"
+    for ($i = 0; $i -lt $catalog.Count; $i++) {
+        "{0,3}) {1}" -f ($i + 1), $catalog[$i] | Write-Host
+    }
+    $choice = Read-Host "Select a number, enter a model tag, or press Enter to skip"
+    if ([string]::IsNullOrWhiteSpace($choice)) { return }
+
+    $selected = $choice
+    $choiceNumber = 0
+    if ([int]::TryParse($choice, [ref]$choiceNumber) -and $choiceNumber -ge 1 -and $choiceNumber -le $catalog.Count) {
+        $selected = $catalog[$choiceNumber - 1]
+    }
+
+    Write-Host "Pulling $selected..."
+    ollama pull $selected
+    Write-Host "[OK] Installed model: $selected"
+}
+
+$installedModels = @(Get-InstalledOllamaModels)
+if ($installedModels.Count -eq 0) {
+    Install-ModelFromCatalog
+} elseif (Test-ModelInstalled $Model $installedModels) {
+    Write-Host "[OK] Using configured model: $Model"
+} elseif (Test-ModelInstalled $FallbackModel $installedModels) {
+    Write-Host "[OK] Using configured fallback model: $FallbackModel"
+} else {
+    Write-Host "[OK] Configured model is not installed; any local model is accepted."
+    Write-Host "[OK] Using installed model: $($installedModels[0])"
+}
+
+# -- 5. Copy config template --------------------------------------------------
 if (-not (Test-Path $ConfigDest)) {
     if (Test-Path $ConfigTmpl) {
         Copy-Item $ConfigTmpl $ConfigDest
-        Write-Host "✅ Config created: .ollama-guard.yml"
+        Write-Host "[OK] Config created: .ollama-guard.yml"
     } else {
-        Write-Host "⚠️  Config template not found — copy .ollama-guard.yml.template manually"
+        Write-Host "[WARN] Config template not found -- copy .ollama-guard.yml.template manually"
     }
 } else {
-    Write-Host "✅ Config: .ollama-guard.yml (exists — not overwritten)"
+    Write-Host "[OK] Config: .ollama-guard.yml (exists -- not overwritten)"
 }
 
-# ── 6. Install pre-push hook ──────────────────────────────────────────────────
+# -- 6. Install pre-push hook -------------------------------------------------
 # Git hooks on Windows run via Git Bash, so we write a bash script
+$GuardDirFwd = $GuardDir.Replace('\','/')
 $hookContent = @"
 #!/usr/bin/env bash
 # pre-push hook managed by ollama-guard
 # Developer: Marcus Daley
-"$($GuardDir.Replace('\','/'))/pre-push.sh" "`$@"
+"$GuardDirFwd/pre-push.sh" "`$@"
 "@
 
 if (Test-Path $HookFile) {
     $existing = Get-Content $HookFile -Raw
     if ($existing -match "ollama-guard") {
-        Write-Host "✅ pre-push hook: already installed"
+        Write-Host "[OK] pre-push hook: already installed"
     } else {
-        Add-Content $HookFile "`n# ollama-guard`n`"$($GuardDir.Replace('\','/'))/pre-push.sh`" `"`$@`""
-        Write-Host "✅ pre-push hook: appended to existing hook"
+        Add-Content $HookFile "`n# ollama-guard`n`"$GuardDirFwd/pre-push.sh`" `"`$@`""
+        Write-Host "[OK] pre-push hook: appended to existing hook"
     }
 } else {
     Set-Content -Path $HookFile -Value $hookContent -Encoding utf8
-    Write-Host "✅ pre-push hook: installed"
+    Write-Host "[OK] pre-push hook: installed"
 }
 
-# ── Done ──────────────────────────────────────────────────────────────────────
+# -- Done ---------------------------------------------------------------------
 Write-Host ""
-Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-Write-Host "  ✅ ollama-guard installed (Windows)"
+Write-Host "-------------------------------------------"
+Write-Host "  [OK] ollama-guard installed (Windows)"
 Write-Host ""
 Write-Host "  Next push will run the error check."
 Write-Host "  Edit .ollama-guard.yml to customize."
-Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+Write-Host "-------------------------------------------"
 Write-Host ""

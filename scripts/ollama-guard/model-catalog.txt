@@ -1,0 +1,9 @@
+# ollama-guard model catalog
+# Blank lines and comments are ignored.
+# Add or reorder models here to control the installer selection menu.
+codellama:7b
+deepseek-coder:6.7b
+codellama:13b
+llama3:8b
+qwen2.5-coder:7b
+llama3.1:8b

@@ -14,8 +14,8 @@ REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 CONFIG_FILE="$REPO_ROOT/.ollama-guard.yml"
 
 # Defaults (overridden by .ollama-guard.yml)
-MODEL="codellama:7b"
-FALLBACK_MODEL="deepseek-coder:6.7b"
+MODEL=""
+FALLBACK_MODEL=""
 TIMEOUT=30
 DRY_RUN=false
 CHECK_TS=true
@@ -50,45 +50,94 @@ if ! command -v ollama &>/dev/null; then
   exit 3
 fi
 
-if ! ollama list 2>/dev/null | grep -q "$MODEL"; then
-  echo "⚠️  Model $MODEL not installed — trying fallback $FALLBACK_MODEL" >&2
+installed_models() {
+  ollama list 2>/dev/null | awk 'NR > 1 && $1 != "" { print $1 }'
+}
+
+model_is_installed() {
+  local model="$1"
+  [[ -n "$model" ]] && installed_models | grep -Fxq "$model"
+}
+
+if model_is_installed "$MODEL"; then
+  :
+elif model_is_installed "$FALLBACK_MODEL"; then
+  echo "Configured model is not installed; using fallback $FALLBACK_MODEL" >&2
   MODEL="$FALLBACK_MODEL"
-  if ! ollama list 2>/dev/null | grep -q "$MODEL"; then
-    echo "⚠️  Fallback model $FALLBACK_MODEL not installed — skipping" >&2
+else
+  MODEL="$(installed_models | head -1)"
+  if [[ -z "$MODEL" ]]; then
+    echo "No Ollama models are installed. Run scripts/ollama-guard/install.sh or install a model with ollama pull <model>." >&2
     exit 3
   fi
+  echo "Configured model is not installed; using available model $MODEL" >&2
 fi
 
 # ── Error collection ──────────────────────────────────────────────────────────
 ERRORS=""
 cd "$REPO_ROOT"
 
+has_npm_script() {
+  local script_name="$1"
+  node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts[process.argv[1]] ? 0 : 1)" "$script_name" 2>/dev/null
+}
+
 collect_ts_errors() {
   local out
-  out=$(npx tsc --noEmit 2>&1 || true)
-  if [[ -n "$out" ]]; then
-    ERRORS+=$'\n\n### TypeScript errors\n'"$out"
+  if has_npm_script typecheck; then
+    if ! out=$(npm run typecheck 2>&1); then
+      ERRORS+=$'\n\n### TypeScript errors\n'"$out"
+    fi
+  else
+    if ! out=$(npx tsc --noEmit 2>&1); then
+      ERRORS+=$'\n\n### TypeScript errors\n'"$out"
+    fi
   fi
 }
 
 collect_eslint_errors() {
   local out
-  out=$(npx eslint . --max-warnings 0 2>&1 || true)
-  if echo "$out" | grep -qE "error|warning"; then
-    ERRORS+=$'\n\n### ESLint errors\n'"$out"
+  if has_npm_script lint; then
+    if ! out=$(npm run lint 2>&1); then
+      if echo "$out" | grep -q "ESLint couldn't find an eslint.config"; then
+        echo "ollama-guard: lint skipped because ESLint is not configured for this repo." >&2
+        return 0
+      fi
+      ERRORS+=$'\n\n### ESLint errors\n'"$out"
+    fi
+  else
+    if ! out=$(npx eslint . --max-warnings 0 2>&1); then
+      if echo "$out" | grep -q "ESLint couldn't find an eslint.config"; then
+        echo "ollama-guard: lint skipped because ESLint is not configured for this repo." >&2
+        return 0
+      fi
+      ERRORS+=$'\n\n### ESLint errors\n'"$out"
+    fi
   fi
 }
 
 collect_test_errors() {
   local out
-  # Detect test runner
-  if grep -q '"vitest"' package.json 2>/dev/null; then
-    out=$(npx vitest run --reporter=verbose 2>&1 || true)
+  if has_npm_script test; then
+    if ! out=$(npm test 2>&1); then
+      if echo "$out" | grep -q "No test files found" && ! echo "$out" | grep -qE "FAIL|AssertionError"; then
+        echo "ollama-guard: tests skipped because configured test packages contain no discovered tests." >&2
+        return 0
+      fi
+      ERRORS+=$'\n\n### Test failures\n'"$out"
+    fi
+  elif grep -q '"vitest"' package.json 2>/dev/null; then
+    if ! out=$(npx vitest run --reporter=verbose 2>&1); then
+      if echo "$out" | grep -q "No test files found" && ! echo "$out" | grep -qE "FAIL|AssertionError"; then
+        echo "ollama-guard: tests skipped because no tests were discovered." >&2
+        return 0
+      fi
+      ERRORS+=$'\n\n### Test failures\n'"$out"
+    fi
   else
-    out=$(npm test -- --passWithNoTests 2>&1 || true)
-  fi
-  if echo "$out" | grep -qiE "FAIL|Error|failed"; then
-    ERRORS+=$'\n\n### Test failures\n'"$out"
+    if ! out=$(npm test -- --passWithNoTests 2>&1); then
+      ERRORS+=$'\n\n### Test failures\n'"$out"
+    fi
   fi
 }
 

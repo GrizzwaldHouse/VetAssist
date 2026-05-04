@@ -10,10 +10,10 @@ source_url: "https://raw.githubusercontent.com/GrizzwaldHouse/VetAssist/main/scr
 #   curl -s $source_url/install.sh | bash
 
 # ── Model ─────────────────────────────────────────────────────────────────────
-model: "codellama:7b"
-fallback_model: "deepseek-coder:6.7b"
-# If model is not installed, the installer will prompt to pull it.
-# Fallback is tried if the primary model fails to load.
+model: ""
+fallback_model: ""
+# Leave blank to let ollama-guard use any installed model.
+# If no model is installed, the installer offers choices from model-catalog.txt.
 
 # ── Routing thresholds ────────────────────────────────────────────────────────
 # Local hook: fixes under this line count are auto-applied after [a] confirmation

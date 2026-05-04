@@ -12,6 +12,7 @@ HOOKS_DIR="$REPO_ROOT/.git/hooks"
 GUARD_DIR="$REPO_ROOT/scripts/ollama-guard"
 CONFIG_DEST="$REPO_ROOT/.ollama-guard.yml"
 CONFIG_TEMPLATE="$GUARD_DIR/.ollama-guard.yml.template"
+MODEL_CATALOG="$GUARD_DIR/model-catalog.txt"
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -37,8 +38,8 @@ fi
 echo "✅ Ollama: $(ollama --version 2>/dev/null | head -1 || echo 'found')"
 
 # ── 3. Read model from config (or use default) ────────────────────────────────
-MODEL="codellama:7b"
-FALLBACK_MODEL="deepseek-coder:6.7b"
+MODEL=""
+FALLBACK_MODEL=""
 if [[ -f "$CONFIG_DEST" ]]; then
   _val=$(grep -E "^model:" "$CONFIG_DEST" 2>/dev/null | head -1 | sed 's/^[^:]*: *//;s/"//g' || true)
   [[ -n "$_val" ]] && MODEL="$_val"
@@ -47,33 +48,57 @@ if [[ -f "$CONFIG_DEST" ]]; then
 fi
 
 # ── 4. Check model is installed, offer to pull ────────────────────────────────
-if ! ollama list 2>/dev/null | grep -q "$MODEL"; then
-  echo ""
-  echo "⚠️  Model '$MODEL' is not installed."
-  printf "   Pull it now? (~4GB download) [y/N]: "
-  read -r PULL_CHOICE
-  if [[ "${PULL_CHOICE:-N}" =~ ^[yY]$ ]]; then
-    echo "   Pulling $MODEL..."
-    ollama pull "$MODEL"
-    echo "✅ Model pulled: $MODEL"
+installed_models() {
+  ollama list 2>/dev/null | awk 'NR > 1 && $1 != "" { print $1 }'
+}
+
+model_is_installed() {
+  local model="$1"
+  [[ -n "$model" ]] && installed_models | grep -Fxq "$model"
+}
+
+load_model_catalog() {
+  if [[ -f "$MODEL_CATALOG" ]]; then
+    grep -Ev '^\s*(#|$)' "$MODEL_CATALOG"
   else
-    echo "   Skipped — checking fallback model '$FALLBACK_MODEL'..."
-    if ! ollama list 2>/dev/null | grep -q "$FALLBACK_MODEL"; then
-      echo ""
-      printf "   Pull fallback model '$FALLBACK_MODEL'? (~4GB) [y/N]: "
-      read -r PULL_FB
-      if [[ "${PULL_FB:-N}" =~ ^[yY]$ ]]; then
-        ollama pull "$FALLBACK_MODEL"
-        echo "✅ Fallback model pulled: $FALLBACK_MODEL"
-      else
-        echo "⚠️  No model available — ollama-guard will skip checks until a model is installed"
-      fi
-    else
-      echo "✅ Fallback model already installed: $FALLBACK_MODEL"
-    fi
+    printf '%s\n' codellama:7b deepseek-coder:6.7b codellama:13b llama3:8b qwen2.5-coder:7b llama3.1:8b
   fi
+}
+
+prompt_for_model_install() {
+  mapfile -t CATALOG < <(load_model_catalog)
+  echo ""
+  echo "No Ollama models are installed. Pick a model to install:"
+  local i=1
+  for candidate in "${CATALOG[@]}"; do
+    printf "  %2d) %s\n" "$i" "$candidate"
+    i=$((i + 1))
+  done
+  printf "Select a number, enter a model tag, or press Enter to skip: "
+  read -r MODEL_CHOICE
+  [[ -z "${MODEL_CHOICE:-}" ]] && return 0
+
+  local selected="$MODEL_CHOICE"
+  if [[ "$MODEL_CHOICE" =~ ^[0-9]+$ ]] && (( MODEL_CHOICE >= 1 && MODEL_CHOICE <= ${#CATALOG[@]} )); then
+    selected="${CATALOG[$((MODEL_CHOICE - 1))]}"
+  fi
+
+  echo "Pulling $selected..."
+  ollama pull "$selected"
+  echo "Installed model: $selected"
+}
+
+INSTALLED_COUNT=$(installed_models | wc -l | tr -d ' ')
+if [[ "$INSTALLED_COUNT" == "0" ]]; then
+  prompt_for_model_install
+elif model_is_installed "$MODEL"; then
+  echo "Using configured model: $MODEL"
+elif model_is_installed "$FALLBACK_MODEL"; then
+  echo "Using configured fallback model: $FALLBACK_MODEL"
 else
-  echo "✅ Model: $MODEL (installed)"
+  FIRST_MODEL=$(installed_models | head -1)
+  echo "Configured model is not installed; any local model is accepted."
+  echo "Using installed model: $FIRST_MODEL"
 fi
 
 # ── 5. Copy config template if not present ────────────────────────────────────
