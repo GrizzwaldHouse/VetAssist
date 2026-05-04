@@ -34,6 +34,7 @@ Everything is free. Always.
 - [Safety Rules](#safety-rules)
 - [Environment Variables](#environment-variables)
 - [Commands](#commands)
+- [Optional Ollama Pre-Push Guard](#optional-ollama-pre-push-guard)
 - [Build Status & Phase Progress](#build-status--phase-progress)
 - [Changelog](#changelog)
 - [Crisis Resources](#crisis-resources)
@@ -332,6 +333,34 @@ npx turbo typecheck        # TypeScript strict mode check across all packages
 npx turbo lint             # ESLint across all packages
 npx turbo clean && rm -rf node_modules  # Full clean
 ```
+
+---
+
+## Optional Ollama Pre-Push Guard
+
+`ollama-guard` is an optional local pre-push hook for developers who want an extra Ollama-backed review before code leaves their machine. It is not required for normal app runtime.
+
+Install from the remote script:
+
+```bash
+curl -s https://raw.githubusercontent.com/GrizzwaldHouse/VetAssist/main/scripts/ollama-guard/install.sh | bash
+```
+
+Or install from this checkout:
+
+```powershell
+# Windows PowerShell
+powershell.exe -ExecutionPolicy Bypass -File .\scripts\ollama-guard\install.ps1
+```
+
+```bash
+# Mac, Linux, or Git Bash
+bash scripts/ollama-guard/install.sh
+```
+
+The installer writes a `.ollama-guard.yml` template with `model` and `fallback_model` left blank. A blank model means the guard accepts any installed Ollama model. If no model is installed, the installer prompts from `scripts/ollama-guard/model-catalog.txt`; update that file to change the installer menu.
+
+Once installed, the hook runs on `git push`. It prefers repo-native `npm` scripts for `typecheck`, `lint`, and `test`, falls back to generic commands only when needed, and handles non-interactive shells without crashing.
 
 ---
 
