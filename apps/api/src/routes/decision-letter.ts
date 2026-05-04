@@ -35,7 +35,7 @@ export const decisionLetterRoute: FastifyPluginAsync = async (fastify) => {
     const sid = sessionId ?? randomUUID();
 
     // Crisis gate — decision letters may contain distressing language
-    const crisisResult = CrisisDetector.detectCrisis(documentText);
+    const crisisResult = await CrisisDetector.detectCrisis(documentText);
     if (crisisResult.isCrisis) {
       eventBus.emit(EVENTS.CRISIS_DETECTED, { sessionId: sid, result: crisisResult });
       return reply.status(200).send({

@@ -1,0 +1,11 @@
+{
+  "expo": {
+    "name": "VetAssist",
+    "slug": "vetassist",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "vetassist",
+    "platforms": ["ios", "android"],
+    "plugins": ["expo-camera", "expo-notifications"]
+  }
+}

@@ -24,6 +24,7 @@ export default defineConfig({
       '@vetassist/legal': resolve('./packages/legal/src/index.ts'),
       '@vetassist/compliance': resolve('./packages/compliance/src/index.ts'),
       '@vetassist/ai': resolve('./packages/ai/src/index.ts'),
+      '@vetassist/security': resolve('./packages/security/src/index.ts'),
     },
   },
 });

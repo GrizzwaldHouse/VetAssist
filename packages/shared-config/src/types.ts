@@ -46,4 +46,6 @@ export interface FeatureFlagsShape {
   readonly analyticsEnabled: boolean;
   readonly presidioEnabled: boolean;
   readonly huggingFaceNerEnabled: boolean;
+  // OFF by default — gates the accredited advisory layer until formally enabled
+  readonly accreditedServiceEnabled: boolean;
 }

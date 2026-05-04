@@ -52,7 +52,7 @@ export const communityRoute: FastifyPluginAsync = async (fastify) => {
     const sid = sessionId ?? randomUUID();
 
     // Crisis gate — must fire before any processing
-    const crisisResult = CrisisDetector.detectCrisis(content);
+    const crisisResult = await CrisisDetector.detectCrisis(content);
     if (crisisResult.isCrisis) {
       eventBus.emit(EVENTS.CRISIS_DETECTED, { sessionId: sid, result: crisisResult });
       return reply.status(200).send({

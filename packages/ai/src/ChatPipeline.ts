@@ -22,6 +22,8 @@ export interface ChatPipelineDependencies {
   readonly provider: AIProvider;
   readonly contextChunksFetcher?: (sanitizedText: string) => Promise<readonly string[]>;
   readonly skillId?: string;
+  // Optional — when present, state-specific compliance rules are applied after the base 6 checks
+  readonly userState?: string;
 }
 
 // Dependency-injected pipeline — no hardcoded provider or context fetcher
@@ -58,8 +60,11 @@ async function run(
     text: legalResult.modifiedText,
   };
 
-  // Compliance gate — mandatory, always runs
-  const complianceResult = await ComplianceEngine.evaluateAndEmit(legallyModifiedResponse);
+  // Compliance gate — mandatory, always runs; passes userState for state-specific rule application
+  const complianceResult = await ComplianceEngine.evaluateWithContextAndEmit(
+    legallyModifiedResponse,
+    deps.userState,
+  );
 
   const finalText = complianceResult.modifiedText;
   const citations = rawResponse.citations;

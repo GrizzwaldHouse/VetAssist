@@ -13,11 +13,13 @@ const AUTO_REMOVE_THRESHOLD = 0.85;
 // Threshold above which content is flagged for admin review but not auto-removed
 const REVIEW_THRESHOLD = 0.50;
 
-// Toxic keyword patterns — MVP heuristic until real toxic-bert HF model is wired in Phase 4
+// Community toxicity patterns — detects abuse directed AT others in community posts
+// Crisis language (suicide, self-harm) is handled upstream by packages/crisis CrisisDetector,
+// which runs on ALL inputs before content reaches this moderation layer.
 const TOXIC_PATTERNS: readonly RegExp[] = [
-  /\b(kill|murder|suicide|self.harm|hurt myself)\b/i,
-  /\b(worthless|disgusting|piece of (shit|trash|garbage))\b/i,
-  /\b(scam|fraud|lie|bullshit|fake)\b/i,
+  /\b(murder|piece of (shit|trash|garbage))\b/i,
+  /\b(worthless|disgusting)\b/i,
+  /\b(scam|fraud|bullshit|fake)\b/i,
 ];
 
 // Spam signal patterns
@@ -49,7 +51,7 @@ export function moderateContent(text: string): ModerationResult {
   // Spam detection
   if (detectSpam(text)) flags.push('spam');
 
-  // Toxicity scoring — simulated toxic-bert until Phase 4 HF integration
+  // Community abuse scoring — detects harassment directed at others
   const toxicityScore = scoreToxicity(text);
   if (toxicityScore >= REVIEW_THRESHOLD) flags.push('toxic');
 

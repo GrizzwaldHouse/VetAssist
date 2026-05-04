@@ -7,6 +7,7 @@ import React from 'react';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { LayoutShell } from '../components/LayoutShell.js';
+import { ServiceWorkerRegistration } from '../components/ServiceWorkerRegistration.js';
 
 // Inter loaded via next/font — optimized, no layout shift
 const inter = Inter({ subsets: ['latin'] });
@@ -43,6 +44,9 @@ export default function RootLayout({ children }: { readonly children: React.Reac
         <a href="#main-content" className="va-skip-link" style={skipLinkStyle}>
           Skip to main content
         </a>
+
+        {/* ServiceWorkerRegistration runs only in browser — registers sw.js for offline caching */}
+        <ServiceWorkerRegistration />
 
         {/* LayoutShell is a client component — owns CrisisLineBanner, NavSidebar, AccessibilityControls */}
         <LayoutShell>

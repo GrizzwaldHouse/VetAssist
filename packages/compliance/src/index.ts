@@ -4,3 +4,4 @@
 // Purpose: Public exports for @vetassist/compliance package
 
 export { ComplianceEngine } from './ComplianceEngine.js';
+export { StateComplianceRules } from './StateComplianceRules.js';

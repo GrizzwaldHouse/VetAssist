@@ -1,0 +1,28 @@
+{
+  "name": "@vetassist/security",
+  "version": "0.1.0",
+  "description": "VetAssist accredited boundary engine — route-level access control for the advisory layer",
+  "author": "Marcus Daley",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@vetassist/events": "*",
+    "@vetassist/shared-config": "*",
+    "@vetassist/shared-types": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  }
+}

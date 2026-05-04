@@ -36,7 +36,7 @@ export const sharingRoute: FastifyPluginAsync = async (fastify) => {
     const sid = sessionId ?? randomUUID();
 
     // Crisis gate — sharing must not bypass safety check
-    const crisisResult = CrisisDetector.detectCrisis(documentContent);
+    const crisisResult = await CrisisDetector.detectCrisis(documentContent);
     if (crisisResult.isCrisis) {
       eventBus.emit(EVENTS.CRISIS_DETECTED, { sessionId: sid, result: crisisResult });
       return reply.status(200).send({

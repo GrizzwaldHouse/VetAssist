@@ -21,6 +21,7 @@ function loadFeatureFlags(): FeatureFlagsShape {
     analyticsEnabled: flag('FEATURE_ANALYTICS', false),
     presidioEnabled: flag('FEATURE_PRESIDIO', true),
     huggingFaceNerEnabled: flag('FEATURE_HF_NER', false),
+    accreditedServiceEnabled: flag('FEATURE_ACCREDITED_SERVICE', false),
   };
 }
 

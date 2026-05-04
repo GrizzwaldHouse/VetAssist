@@ -9,6 +9,7 @@ import { eventBus, EVENTS } from '@vetassist/events';
 import { CrisisDetector } from '@vetassist/crisis';
 import { LegalBoundaryEngine } from '@vetassist/legal';
 import { TextSanitizer } from '@vetassist/shared-utils';
+import { StateComplianceRules } from './StateComplianceRules.js';
 
 const EDUCATIONAL_DISCLAIMER =
   'This information is for educational purposes only. It does not constitute legal or medical advice. Please consult a VA-accredited VSO or qualified professional for guidance specific to your situation.';
@@ -69,10 +70,28 @@ function checkPIIInResponse(text: string): ComplianceCheck {
   };
 }
 
+// Applies state-specific language rules on top of already-modified text — severity is always modify
+function checkStateSpecificLanguage(
+  text: string,
+  userState: string,
+): ComplianceCheck & { readonly modifiedText: string } {
+  const rules = StateComplianceRules.getRulesForState(userState);
+  if (!rules) {
+    return { type: 'state_specific_language', detected: false, severity: 'modify', modifiedText: text };
+  }
+  const modifiedText = StateComplianceRules.applyStateRules(text, rules);
+  return {
+    type: 'state_specific_language',
+    detected: modifiedText !== text,
+    severity: 'modify',
+    modifiedText,
+  };
+}
+
 // Runs all compliance checks in order — returns full result with modified text
 async function evaluate(response: AIResponse): Promise<ComplianceResult> {
   // Crisis check on AI output (defense in depth — should have been caught on input)
-  const crisisResult = CrisisDetector.detectCrisis(response.text);
+  const crisisResult = await CrisisDetector.detectCrisis(response.text);
   const crisisCheck: ComplianceCheck = {
     type: 'crisis_keywords',
     detected: crisisResult.isCrisis,
@@ -152,7 +171,51 @@ async function evaluateAndEmit(response: AIResponse): Promise<ComplianceResult> 
   return result;
 }
 
+// State-aware evaluation — runs 6 base checks then appends the 7th state-specific check
+// when userState is provided. Existing evaluate() is unchanged — callers without state get identical behavior.
+async function evaluateWithContext(response: AIResponse, userState?: string): Promise<ComplianceResult> {
+  const baseResult = await evaluate(response);
+
+  if (!userState) return baseResult;
+
+  // State check runs on the base result's modified text (post-legal, post-PII text)
+  const stateResult = checkStateSpecificLanguage(baseResult.modifiedText, userState);
+  const stateCheck: ComplianceCheck = {
+    type: stateResult.type,
+    detected: stateResult.detected,
+    severity: stateResult.severity,
+  };
+
+  return {
+    passed: baseResult.passed,
+    checks: [...baseResult.checks, stateCheck],
+    modifiedText: stateResult.modifiedText,
+    disclaimerAppended: baseResult.disclaimerAppended,
+  };
+}
+
+// State-aware pipeline with event emission
+async function evaluateWithContextAndEmit(response: AIResponse, userState?: string): Promise<ComplianceResult> {
+  const result = await evaluateWithContext(response, userState);
+
+  if (!result.passed) {
+    await eventBus.emit(EVENTS.COMPLIANCE_FAILED, {
+      sessionId: response.sessionId,
+      result,
+    });
+  } else {
+    await eventBus.emit(EVENTS.COMPLIANCE_PASSED, {
+      sessionId: response.sessionId,
+      finalText: result.modifiedText,
+    });
+  }
+
+  return result;
+}
+
 export const ComplianceEngine = {
   evaluate,
   evaluateAndEmit,
+  evaluateWithContext,
+  evaluateWithContextAndEmit,
 } as const;

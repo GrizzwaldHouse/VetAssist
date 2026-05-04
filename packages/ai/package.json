@@ -20,6 +20,8 @@
     "@vetassist/compliance": "*",
     "@vetassist/events": "*",
     "@vetassist/legal": "*",
+    "@vetassist/pii": "*",
+    "@vetassist/reports": "*",
     "@vetassist/shared-config": "*",
     "@vetassist/shared-types": "*",
     "@vetassist/shared-utils": "*"

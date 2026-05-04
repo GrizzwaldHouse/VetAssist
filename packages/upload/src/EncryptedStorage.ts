@@ -80,6 +80,27 @@ export class EncryptedStorage {
     });
   }
 
+  // Overwrites file content with zeros before deletion — prevents data recovery from disk
+  async secureWipe(documentId: string): Promise<void> {
+    const record = this.records.get(documentId);
+    if (!record) return;
+
+    try {
+      const encrypted = await readFile(record.encryptedPath);
+      // Single-pass zero overwrite — sufficient for non-magnetic storage (SSDs, cloud volumes)
+      await writeFile(record.encryptedPath, Buffer.alloc(encrypted.length, 0));
+      await unlink(record.encryptedPath);
+    } catch {
+      // File may already be gone — continue to clear the in-memory record
+    }
+
+    this.records.delete(documentId);
+  }
+
+  hasDocument(documentId: string): boolean {
+    return this.records.has(documentId);
+  }
+
   // Runs on a fixed interval — .unref() prevents the timer from blocking process exit
   private startPurgeCycle(): void {
     setInterval(() => { void this.purgeExpired(); }, PURGE_INTERVAL_MS).unref();

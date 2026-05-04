@@ -16,6 +16,7 @@
     "noFallthroughCasesInSwitch": true,
     "exactOptionalPropertyTypes": false,
     "outDir": "./dist",
+    "types": ["node"],
     "baseUrl": ".",
     "paths": {
       "@vetassist/shared-types": ["./packages/shared-types/src"],

@@ -16,4 +16,6 @@ export { InlineDiffHandler } from './handlers/InlineDiffHandler.js';
 export { DocumentWriterHandler } from './handlers/DocumentWriterHandler.js';
 export { SharingService } from './SharingService.js';
 export { StoryBuilderHandler } from './handlers/StoryBuilderHandler.js';
+export { DataDestructionService } from './DataDestructionService.js';
+export type { DocumentStore } from './DataDestructionService.js';
 export type { PromptLoader } from './PromptLoader.js';

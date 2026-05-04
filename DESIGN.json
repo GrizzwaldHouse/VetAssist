@@ -1,0 +1,200 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-04-28T00:00:00.000Z",
+  "title": "Design System: VetAssist",
+  "extensions": {
+    "colorMeta": {
+      "field-black":      { "role": "neutral",   "displayName": "Field Black",      "canonical": "#0D0F14", "tonalRamp": ["#0D0F14","#141720","#1C2033","#242840","#2C3150","#3A3F62","#4A5074","#6A7090"] },
+      "aged-canvas":      { "role": "neutral",   "displayName": "Aged Canvas",      "canonical": "#1C2033", "tonalRamp": ["#0D0F14","#141720","#1C2033","#242840","#2C3150","#3A3F62","#5A6080","#8090AA"] },
+      "old-glory-red":    { "role": "primary",   "displayName": "Old Glory Red",    "canonical": "#B22234", "tonalRamp": ["#3B0A10","#5C1019","#7A1A1A","#8B1A1A","#B22234","#C83444","#D85060","#E88090"] },
+      "text-primary":     { "role": "neutral",   "displayName": "Star Field White",  "canonical": "#EDF0F4", "tonalRamp": ["#4A4E58","#6A6E78","#8A8E98","#AAAFBA","#C8CDD8","#D8DDE8","#E5E8F0","#EDF0F4"] },
+      "text-secondary":   { "role": "neutral",   "displayName": "Field Haze",        "canonical": "#8A96AA", "tonalRamp": ["#2A3040","#3A4050","#4A5060","#5A6070","#6A7080","#8A96AA","#AABAC8","#C8D4E0"] },
+      "star-white":       { "role": "neutral",   "displayName": "Star White",        "canonical": "#F5F5F5", "tonalRamp": ["#606060","#808080","#A0A0A0","#C0C0C0","#D8D8D8","#E8E8E8","#F0F0F0","#F5F5F5"] },
+      "field-blue":       { "role": "secondary", "displayName": "Field Blue",        "canonical": "#1A2744", "tonalRamp": ["#0A1020","#101828","#1A2744","#243460","#304080","#4060A0","#6080C0","#90AAD8"] },
+      "military-olive":   { "role": "secondary", "displayName": "Military Olive",    "canonical": "#4A5240", "tonalRamp": ["#1A1E18","#282E22","#38402C","#4A5240","#5C6650","#7A8860","#9AAA80","#BCC8A0"] },
+      "border":           { "role": "neutral",   "displayName": "Trench Line",       "canonical": "#2A3149", "tonalRamp": ["#0D0F14","#141720","#1C2033","#2A3149","#384060","#4A5278","#6070A0","#8090C0"] },
+      "crisis-bg":        { "role": "primary",   "displayName": "Crisis Crimson",    "canonical": "#8B0000", "tonalRamp": ["#2C0000","#440000","#5C0000","#740000","#8B0000","#A00000","#C00010","#D82030"] },
+      "score-low":        { "role": "tertiary",  "displayName": "Alert Red",         "canonical": "#B22234", "tonalRamp": ["#3B0A10","#5C1019","#7A1A1A","#8B1A1A","#B22234","#C83444","#D85060","#E88090"] },
+      "score-mid":        { "role": "tertiary",  "displayName": "Caution Gold",      "canonical": "#C8A135", "tonalRamp": ["#3C2C08","#5A4010","#7A5818","#9A7020","#C8A135","#D8B850","#E8CC70","#F0DC98"] },
+      "score-high":       { "role": "tertiary",  "displayName": "Mission Green",     "canonical": "#4A7C59", "tonalRamp": ["#0F2018","#182E20","#283E30","#384E3C","#4A7C59","#5C9870","#7AB888","#A0CCA8"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display",  "purpose": "Page-level heroes only. Rare — one per screen at most." },
+      "headline": { "displayName": "Headline", "purpose": "Primary screen titles (H1)." },
+      "title":    { "displayName": "Title",    "purpose": "Section headers, card titles (H2/H3)." },
+      "body":     { "displayName": "Body",     "purpose": "All reading content. 65–75ch max line length." },
+      "label":    { "displayName": "Label",    "purpose": "Navigation, buttons, section dividers, badge text. Always uppercase." },
+      "mono":     { "displayName": "Mono",     "purpose": "VA file numbers, certificate IDs, structured form values." }
+    },
+    "shadows": [
+      {
+        "name": "modal",
+        "value": "0 8px 32px rgba(0, 0, 0, 0.7)",
+        "purpose": "Full-screen modals, crisis interrupt overlay, PIIWarningModal. Physical separation from page."
+      },
+      {
+        "name": "focus-ring",
+        "value": "0 0 0 3px #B22234",
+        "purpose": "Keyboard focus ring on all interactive elements. Old Glory Red, 3px, no blur."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Standard easing for all state transitions."
+      },
+      {
+        "name": "duration-fast",
+        "value": "150ms",
+        "purpose": "Hover state color shifts (nav items, buttons, inputs). Collapses to 0ms under prefers-reduced-motion."
+      },
+      {
+        "name": "duration-normal",
+        "value": "200ms",
+        "purpose": "Component expand/collapse (AIDisclosureBanner). Collapses to 0ms under prefers-reduced-motion."
+      },
+      {
+        "name": "duration-slow",
+        "value": "800ms",
+        "purpose": "ScoreRing fill animation only. Collapses to 0ms under prefers-reduced-motion."
+      },
+      {
+        "name": "crisis-pulse",
+        "value": "opacity 3s ease-in-out infinite (1.0 → 0.88 → 1.0)",
+        "purpose": "CrisisLineBanner slow pulse. Runs only under prefers-reduced-motion: no-preference."
+      }
+    ],
+    "breakpoints": [
+      { "name": "mobile",  "value": "768px",  "purpose": "Below: bottom tab bar nav, single-column layout, hide drop zone." },
+      { "name": "tablet",  "value": "1024px", "purpose": "Between: constrained sidebar, single-panel content." },
+      { "name": "desktop", "value": "1024px", "purpose": "Above: sidebar + two-panel layout for Chat and Document Review." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The sole high-emphasis action. One per screen section. Old Glory Red background, uppercase Oswald label.",
+      "html": "<button class=\"ds-btn-primary\">Analyze Document</button>",
+      "css": ".ds-btn-primary { background: #B22234; color: #F5F5F5; font-family: 'Oswald', Georgia, serif; font-size: 0.61rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 0 24px; height: 48px; min-width: 48px; border: none; border-radius: 4px; cursor: pointer; transition: background 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-primary:hover { background: #7A1A1A; } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px #B22234; } .ds-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary / dismiss actions. Transparent, Text Secondary color. Same dimensions as primary.",
+      "html": "<button class=\"ds-btn-ghost\">Got it</button>",
+      "css": ".ds-btn-ghost { background: transparent; color: #8A96AA; font-family: 'Oswald', Georgia, serif; font-size: 0.61rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 0 24px; height: 48px; min-width: 48px; border: none; border-radius: 4px; cursor: pointer; transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-ghost:hover { color: #EDF0F4; } .ds-btn-ghost:focus-visible { outline: none; box-shadow: 0 0 0 3px #B22234; }"
+    },
+    {
+      "name": "Navigation Item",
+      "kind": "nav",
+      "refersTo": "nav-item-default",
+      "description": "Sidebar nav item. Default and active states. Old Glory Red left border marks active page.",
+      "html": "<div class=\"ds-nav-group\"><a href=\"#\" class=\"ds-nav-item\">Chat</a><a href=\"#\" class=\"ds-nav-item ds-nav-item--active\" aria-current=\"page\">Documents</a></div>",
+      "css": ".ds-nav-group { display: flex; flex-direction: column; } .ds-nav-item { display: flex; align-items: center; gap: 10px; padding: 12px 16px; font-family: 'Oswald', Georgia, serif; font-size: 0.78rem; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; color: #8A96AA; text-decoration: none; border-left: 3px solid transparent; min-height: 48px; transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1), background 150ms cubic-bezier(0.4, 0, 0.2, 1), border-color 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-nav-item:hover { color: #EDF0F4; background: #222640; } .ds-nav-item--active { color: #EDF0F4; background: #1C2033; border-left-color: #B22234; } .ds-nav-item:focus-visible { outline: none; box-shadow: 0 0 0 3px #B22234; }"
+    },
+    {
+      "name": "Filter Chip",
+      "kind": "chip",
+      "refersTo": "chip-filter",
+      "description": "Benefit / story category filter. Pill shape, Aged Canvas default, Old Glory Red when active.",
+      "html": "<div class=\"ds-chip-group\"><button class=\"ds-chip\">Education</button><button class=\"ds-chip ds-chip--active\">Healthcare</button><button class=\"ds-chip\">Housing</button></div>",
+      "css": ".ds-chip-group { display: flex; gap: 8px; flex-wrap: wrap; } .ds-chip { background: #1C2033; color: #8A96AA; font-family: 'Oswald', Georgia, serif; font-size: 0.61rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 6px 14px; border: none; border-radius: 100px; cursor: pointer; transition: background 150ms cubic-bezier(0.4, 0, 0.2, 1), color 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-chip:hover { background: #222640; color: #EDF0F4; } .ds-chip--active { background: #B22234; color: #F5F5F5; } .ds-chip:focus-visible { outline: none; box-shadow: 0 0 0 3px #B22234; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Standard content container. Aged Canvas surface, 4px radius, no shadow at rest.",
+      "html": "<div class=\"ds-card\"><h3 class=\"ds-card-title\">Benefit Title</h3><p class=\"ds-card-body\">Plain-English eligibility summary for this benefit. Written for a veteran who has never navigated VA paperwork.</p></div>",
+      "css": ".ds-card { background: #1C2033; border-radius: 4px; padding: 24px; } .ds-card-title { font-family: 'Oswald', Georgia, serif; font-size: 1.33rem; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; color: #EDF0F4; margin: 0 0 12px; } .ds-card-body { font-family: 'Source Serif 4', Georgia, serif; font-size: 1rem; font-weight: 400; line-height: 1.6; color: #8A96AA; margin: 0; max-width: 65ch; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-default",
+      "description": "Standard text field. Field Black background, Border stroke, red focus ring.",
+      "html": "<div class=\"ds-field\"><label class=\"ds-field-label\" for=\"ds-input-1\">Your Question</label><input class=\"ds-input\" id=\"ds-input-1\" type=\"text\" placeholder=\"Ask about your VA benefits...\" /></div>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 6px; } .ds-field-label { font-family: 'Oswald', Georgia, serif; font-size: 0.61rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #8A96AA; } .ds-input { background: #0D0F14; color: #EDF0F4; font-family: 'Source Serif 4', Georgia, serif; font-size: 1rem; padding: 12px 16px; border: 1px solid #2A3149; border-radius: 4px; outline: none; transition: border-color 150ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-input::placeholder { color: #4A5060; } .ds-input:focus { border-color: #B22234; box-shadow: 0 0 0 3px #B22234; }"
+    },
+    {
+      "name": "Score Ring",
+      "kind": "custom",
+      "refersTo": "button-primary",
+      "description": "Precision instrument gauge for document quality. 24 tick marks, score-tiered arc color, 800ms fill animation.",
+      "html": "<div class=\"ds-score-ring-demo\"><svg width=\"172\" height=\"172\" viewBox=\"0 0 172 172\" role=\"img\" aria-label=\"Document quality score: 78% — VA Alignment\"><circle cx=\"86\" cy=\"86\" r=\"54\" fill=\"none\" stroke=\"#2A3149\" stroke-width=\"12\" aria-hidden=\"true\"/><circle cx=\"86\" cy=\"86\" r=\"54\" fill=\"none\" stroke=\"#4A7C59\" stroke-width=\"12\" stroke-linecap=\"butt\" stroke-dasharray=\"339.3\" stroke-dashoffset=\"74.6\" transform=\"rotate(-90 86 86)\" aria-hidden=\"true\"/><text x=\"86\" y=\"80\" text-anchor=\"middle\" dominant-baseline=\"middle\" fill=\"#F5F5F5\" font-size=\"2rem\" font-family=\"Oswald, Georgia, serif\" font-weight=\"700\" aria-hidden=\"true\">78%</text><text x=\"86\" y=\"102\" text-anchor=\"middle\" dominant-baseline=\"middle\" fill=\"#8A96AA\" font-size=\"0.67rem\" font-family=\"Source Serif 4, Georgia, serif\" aria-hidden=\"true\">VA Alignment</text></svg></div>",
+      "css": ".ds-score-ring-demo { display: inline-block; background: #1C2033; border-radius: 4px; padding: 24px; }"
+    },
+    {
+      "name": "Crisis Line Banner",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "Non-dismissable safety banner. Sticky top, z-index 1000, Crisis Crimson background. Never hidden.",
+      "html": "<a class=\"ds-crisis-banner\" href=\"tel:988\" aria-label=\"Veterans Crisis Line. Call 988 and press 1. Text 838255. Chat at VeteransCrisisLine.net.\"><span aria-hidden=\"true\">★</span><span class=\"ds-crisis-text\">VETERANS CRISIS LINE: CALL 988 PRESS 1&nbsp;&nbsp;|&nbsp;&nbsp;TEXT 838255&nbsp;&nbsp;|&nbsp;&nbsp;CHAT VeteransCrisisLine.net</span><span aria-hidden=\"true\">★</span></a>",
+      "css": ".ds-crisis-banner { display: flex; align-items: center; justify-content: center; gap: 12px; height: 48px; background: #8B0000; text-decoration: none; color: #FFFFFF; } .ds-crisis-text { font-family: 'Oswald', Georgia, serif; font-size: 0.61rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #FFFFFF; } .ds-crisis-banner:focus-visible { outline: 3px solid #F5F5F5; outline-offset: -3px; }"
+    },
+    {
+      "name": "AI Disclosure Banner",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "Required on every AI-powered screen. Field Blue background, Military Olive left border. Collapsible per session.",
+      "html": "<div class=\"ds-ai-disclosure\" role=\"note\" aria-label=\"AI disclosure\"><span class=\"ds-ai-icon\" aria-hidden=\"true\">⚙</span><p class=\"ds-ai-text\">VetAssist uses AI to provide educational information. This is not legal or medical advice. For claim-specific help, contact a VA-accredited VSO.</p><button class=\"ds-ai-dismiss\" aria-label=\"Dismiss AI disclosure banner for this session\">Got it</button></div>",
+      "css": ".ds-ai-disclosure { display: flex; align-items: flex-start; gap: 10px; padding: 12px 18px; background: #1A2744; border-left: 3px solid #4A5240; } .ds-ai-icon { color: #8A96AA; font-size: 16px; flex-shrink: 0; padding-top: 2px; } .ds-ai-text { font-family: 'Source Serif 4', Georgia, serif; font-size: 0.78rem; font-style: italic; color: #8A96AA; line-height: 1.5; flex: 1; margin: 0; } .ds-ai-dismiss { font-family: 'Oswald', Georgia, serif; font-size: 0.67rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: #8A96AA; background: none; border: none; cursor: pointer; flex-shrink: 0; padding: 0; min-height: 48px; min-width: 48px; } .ds-ai-dismiss:hover { color: #EDF0F4; } .ds-ai-dismiss:focus-visible { outline: none; box-shadow: 0 0 0 3px #B22234; }"
+    },
+    {
+      "name": "Document Drop Zone",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "Drag-and-drop upload area. Dashed border default, Old Glory Red border on drag-active.",
+      "html": "<div class=\"ds-drop-zone\" role=\"button\" tabindex=\"0\" aria-label=\"Document upload zone. Click or drag files here.\"><span class=\"ds-drop-icon\" aria-hidden=\"true\">📋</span><p class=\"ds-drop-heading\">Drop Your Documents Here</p><p class=\"ds-drop-sub\">PDF, JPG, PNG, HEIC, TIFF, DOCX, TXT — Max 25 MB per file</p></div>",
+      "css": ".ds-drop-zone { border: 2px dashed #2A3149; border-radius: 4px; background: #0D0F14; padding: 40px 32px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: border-color 150ms cubic-bezier(0.4, 0, 0.2, 1), background 150ms cubic-bezier(0.4, 0, 0.2, 1); outline: none; } .ds-drop-zone:hover, .ds-drop-zone:focus-visible { border-color: #B22234; box-shadow: 0 0 0 3px #B22234; } .ds-drop-icon { font-size: 40px; } .ds-drop-heading { font-family: 'Oswald', Georgia, serif; font-size: 1rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: #EDF0F4; margin: 12px 0 4px; } .ds-drop-sub { font-family: 'Source Serif 4', Georgia, serif; font-size: 0.78rem; color: #8A96AA; text-align: center; margin: 0; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Worn Flag",
+    "overview": "This system is built around a single physical object: a flag that has been carried, folded, and unfolded many times. Not the recruiting poster flag — the field flag. Its colors are deep and muted, its fabric has weight, its stars are earned. That object is the emotional register for every design decision: authority without aggression, dignity without bureaucracy, service without performance.\n\nThe palette is called Stars & Field. Field Black covers 60% of every surface — a near-black with enough blue cast to read as intentional, not default. Aged Canvas raises cards and panels off the base at 30%. Old Glory Red appears on no more than 10% of any screen — CTAs, active navigation states, the crisis banner. Its rarity is structural. Typography pairs Oswald (a compressed, military-stencil condensed sans) with Source Serif 4 (a reading-optimized serif with warmth) — command voice and human voice in balance.\n\nThis system explicitly rejects: VA.gov's institutional blue; clinical white-and-teal health portal aesthetics; BetterHelp's performative corporate warmth; generic dark-mode SaaS (Inter, purple-to-blue gradients, identical card grids); and military recruiting aesthetics.",
+    "keyCharacteristics": [
+      "Dark mode primary, always — low-stimulation by design, not by trend",
+      "Compressed condensed type (Oswald) for structural chrome; warm serif (Source Serif 4) for all reading content",
+      "Sharp corners throughout (4px radius) — precision over softness",
+      "Single accent color (Old Glory Red) used with discipline — maximum 10% surface coverage",
+      "Flag watermark at 3% opacity in sidebar — felt, not seen",
+      "Every interactive element meets 48px touch target minimum"
+    ],
+    "rules": [
+      { "name": "The Scarcity Rule",          "body": "Old Glory Red appears on ≤10% of any screen. Its rarity makes it visible. If a screen has more than one red element competing for attention, one of them is wrong.",                    "section": "colors" },
+      { "name": "The Crisis Isolation Rule",  "body": "Crisis Crimson (#8B0000) belongs to the crisis banner and nothing else. No other component, state, or decoration may use it.",                                                             "section": "colors" },
+      { "name": "The Two-Voice Rule",         "body": "Oswald owns all structural chrome: navigation, buttons, labels, section headers, the logo. Source Serif 4 owns all reading content. Never swap them.",                                   "section": "typography" },
+      { "name": "The Never-Inter Rule",       "body": "Inter, Roboto, and Arial are prohibited on all surfaces. They carry no character and signal generic SaaS.",                                                                              "section": "typography" },
+      { "name": "The Flat-By-Default Rule",   "body": "Cards, panels, inputs, and navigation are flat at rest. Shadows are reserved for elements that physically interrupt page flow (modals, overlays).",                                      "section": "elevation" },
+      { "name": "The Focus Ring Rule",        "body": "Every interactive element shows a 3px Old Glory Red focus ring on keyboard focus. Never hidden, never styled to match the surface.",                                                     "section": "elevation" },
+      { "name": "The One Red Button Rule",    "body": "Each distinct action area has at most one Primary button. If two actions compete, one is demoted to Ghost. Never two red buttons side by side.",                                        "section": "components" },
+      { "name": "The No-Nesting Rule",        "body": "Cards never contain cards. Use a background tint or a horizontal rule to create sub-grouping within a card.",                                                                           "section": "components" }
+    ],
+    "dos": [
+      "Do keep Old Glory Red to ≤10% surface coverage on any screen.",
+      "Do use Oswald for structural chrome and Source Serif 4 for reading content — the two-voice split is non-negotiable.",
+      "Do set all touch targets to a minimum of 48×48px.",
+      "Do gate every animation behind prefers-reduced-motion: reduce.",
+      "Do use 4px radius on all interactive components.",
+      "Do write error messages as: [What happened] + [What to do next].",
+      "Do use JetBrains Mono for structured data: VA file numbers, certificate IDs, claim reference numbers."
+    ],
+    "donts": [
+      "Don't use Inter, Roboto, or Arial anywhere.",
+      "Don't use VA.gov blue (#003E73 or similar) on any surface.",
+      "Don't replicate Healthcare.gov or clinical health portal aesthetics.",
+      "Don't replicate BetterHelp or mental health SaaS aesthetics.",
+      "Don't use purple-to-blue gradients, glassmorphism, hero metrics, or identical card grids.",
+      "Don't use military recruiting aesthetics: eagles, camouflage, aggressive red-white-blue maximalism.",
+      "Don't use border-left greater than 3px as a decorative stripe on cards or list items.",
+      "Don't nest cards.",
+      "Don't use Crisis Crimson (#8B0000) for anything except the CrisisLineBanner.",
+      "Don't make any animation faster than 100ms.",
+      "Don't dismiss or hide the CrisisLineBanner under any condition."
+    ]
+  }
+}
