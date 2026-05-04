@@ -235,7 +235,7 @@ const SEEDED_RESOURCES: readonly LearningResource[] = [
 export const learningHubRoute: FastifyPluginAsync = async (fastify) => {
 
   // GET /api/learning — list resources with optional filters
-  fastify.get('/learning', async (request, reply) => {
+  fastify.get('/learning', {}, async (request, reply) => {
     const parsed = ListQuerySchema.safeParse(request.query);
     if (!parsed.success) {
       return reply.status(400).send({ message: 'Invalid query parameters', errors: parsed.error.issues });
@@ -271,11 +271,11 @@ export const learningHubRoute: FastifyPluginAsync = async (fastify) => {
       totalCount: results.length,
     };
 
-    return reply.status(200).send(response);
+    return reply.send(response);
   });
 
   // GET /api/learning/:id — single resource by ID
-  fastify.get('/learning/:id', async (request, reply) => {
+  fastify.get('/learning/:id', {}, async (request, reply) => {
     const { id } = request.params as { id: string };
     const resource = SEEDED_RESOURCES.find(r => r.id === id);
 
@@ -283,6 +283,6 @@ export const learningHubRoute: FastifyPluginAsync = async (fastify) => {
       return reply.status(404).send({ message: 'Resource not found' });
     }
 
-    return reply.status(200).send(resource);
+    return reply.send(resource);
   });
 };

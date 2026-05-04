@@ -19,6 +19,17 @@ function createMockFastify() {
   };
 }
 
+function getHandler(
+  mock: ReturnType<typeof createMockFastify>,
+  method: 'post',
+  url: string
+): (req: unknown, reply: unknown) => unknown {
+  const calls = (mock[method] as ReturnType<typeof vi.fn>).mock.calls as Array<[string, unknown, unknown]>;
+  const match = calls.find((c) => c[0] === url);
+  if (!match) throw new Error(`No handler registered for ${method.toUpperCase()} ${url}`);
+  return match[2] as (req: unknown, reply: unknown) => unknown;
+}
+
 describe('sharingRoute', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -27,8 +38,8 @@ describe('sharingRoute', () => {
   describe('Input Validation', () => {
     it('rejects empty document content', async () => {
       const mockFastify = createMockFastify();
-      await sharingRoute(mockFastify as unknown as Parameters<typeof sharingRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/documents/share')?.[2];
+      await sharingRoute(mockFastify as unknown as Parameters<typeof sharingRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/documents/share');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       await handler({ body: { documentContent: '', documentTitle: 'Test', channel: 'email' } }, reply);
@@ -38,8 +49,8 @@ describe('sharingRoute', () => {
 
     it('rejects empty document title', async () => {
       const mockFastify = createMockFastify();
-      await sharingRoute(mockFastify as unknown as Parameters<typeof sharingRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/documents/share')?.[2];
+      await sharingRoute(mockFastify as unknown as Parameters<typeof sharingRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/documents/share');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       await handler({ body: { documentContent: 'test', documentTitle: '', channel: 'email' } }, reply);
@@ -49,8 +60,8 @@ describe('sharingRoute', () => {
 
     it('rejects invalid channel', async () => {
       const mockFastify = createMockFastify();
-      await sharingRoute(mockFastify as unknown as Parameters<typeof sharingRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/documents/share')?.[2];
+      await sharingRoute(mockFastify as unknown as Parameters<typeof sharingRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/documents/share');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       await handler({ body: { documentContent: 'test', documentTitle: 'Test', channel: 'fax' } }, reply);
@@ -60,8 +71,8 @@ describe('sharingRoute', () => {
 
     it('rejects recipient over 320 characters', async () => {
       const mockFastify = createMockFastify();
-      await sharingRoute(mockFastify as unknown as Parameters<typeof sharingRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/documents/share')?.[2];
+      await sharingRoute(mockFastify as unknown as Parameters<typeof sharingRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/documents/share');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       await handler({ body: { documentContent: 'test', documentTitle: 'Test', channel: 'email', recipient: 'a'.repeat(321) } }, reply);
@@ -71,11 +82,11 @@ describe('sharingRoute', () => {
 
     it('accepts valid email share request', async () => {
       const mockFastify = createMockFastify();
-      await sharingRoute(mockFastify as unknown as Parameters<typeof sharingRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/documents/share')?.[2];
+      await sharingRoute(mockFastify as unknown as Parameters<typeof sharingRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/documents/share');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
-      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: false, matchedPhrases: [] });
+      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: false, matchedPhrases: [], confidence: 0, tier: 0 as const });
       vi.spyOn(SharingService.prototype, 'share').mockResolvedValue({ success: true, channel: 'email', piiRescanned: true, piiFound: false, downloadPayload: null, sharedAt: new Date().toISOString() } as any);
 
       await handler({ body: { documentContent: 'test content', documentTitle: 'Test Doc', channel: 'email', recipient: 'test@example.com' } }, reply);
@@ -85,11 +96,11 @@ describe('sharingRoute', () => {
 
     it('accepts download channel without recipient', async () => {
       const mockFastify = createMockFastify();
-      await sharingRoute(mockFastify as unknown as Parameters<typeof sharingRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/documents/share')?.[2];
+      await sharingRoute(mockFastify as unknown as Parameters<typeof sharingRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/documents/share');
       const reply = { send: vi.fn() };
 
-      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: false, matchedPhrases: [] });
+      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: false, matchedPhrases: [], confidence: 0, tier: 0 as const });
       vi.spyOn(SharingService.prototype, 'share').mockResolvedValue({ success: true, channel: 'download', piiRescanned: true, piiFound: false, downloadPayload: { url: 'data:text/plain,test' }, sharedAt: new Date().toISOString() } as any);
 
       await handler({ body: { documentContent: 'test', documentTitle: 'Test', channel: 'download' } }, reply);
@@ -101,12 +112,12 @@ describe('sharingRoute', () => {
   describe('Crisis Detection', () => {
     it('blocks sharing when crisis detected', async () => {
       const mockFastify = createMockFastify();
-      await sharingRoute(mockFastify as unknown as Parameters<typeof sharingRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/documents/share')?.[2];
+      await sharingRoute(mockFastify as unknown as Parameters<typeof sharingRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/documents/share');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
       const emitSpy = vi.spyOn(eventBus, 'emit');
 
-      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: true, matchedPhrases: ['end my life'] });
+      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: true, matchedPhrases: ['end my life'], confidence: 1, tier: 1 as const });
 
       await handler({ body: { documentContent: 'I want to end my life', documentTitle: 'Test', channel: 'email', recipient: 'test@example.com' } }, reply);
 
@@ -123,12 +134,12 @@ describe('sharingRoute', () => {
   describe('Document Sharing', () => {
     it('shares document via email successfully', async () => {
       const mockFastify = createMockFastify();
-      await sharingRoute(mockFastify as unknown as Parameters<typeof sharingRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/documents/share')?.[2];
+      await sharingRoute(mockFastify as unknown as Parameters<typeof sharingRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/documents/share');
       const reply = { send: vi.fn() };
       const mockResult = { success: true, channel: 'email', piiRescanned: true, piiFound: false, downloadPayload: null, sharedAt: new Date().toISOString() };
 
-      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: false, matchedPhrases: [] });
+      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: false, matchedPhrases: [], confidence: 0, tier: 0 as const });
       vi.spyOn(SharingService.prototype, 'share').mockResolvedValue(mockResult as any);
 
       await handler({ body: { documentContent: 'test', documentTitle: 'Test', channel: 'email', recipient: 'test@example.com' } }, reply);
@@ -138,12 +149,12 @@ describe('sharingRoute', () => {
 
     it('detects PII in shared document and emits event', async () => {
       const mockFastify = createMockFastify();
-      await sharingRoute(mockFastify as unknown as Parameters<typeof sharingRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/documents/share')?.[2];
+      await sharingRoute(mockFastify as unknown as Parameters<typeof sharingRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/documents/share');
       const reply = { send: vi.fn() };
       const emitSpy = vi.spyOn(eventBus, 'emit');
 
-      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: false, matchedPhrases: [] });
+      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: false, matchedPhrases: [], confidence: 0, tier: 0 as const });
       vi.spyOn(SharingService.prototype, 'share').mockResolvedValue({ success: true, channel: 'email', piiRescanned: true, piiFound: true, downloadPayload: null, sharedAt: new Date().toISOString() } as any);
 
       await handler({ body: { documentContent: 'SSN: 123-45-6789', documentTitle: 'Test', channel: 'email', recipient: 'test@example.com' } }, reply);
@@ -153,11 +164,11 @@ describe('sharingRoute', () => {
 
     it('shares document via SMS successfully', async () => {
       const mockFastify = createMockFastify();
-      await sharingRoute(mockFastify as unknown as Parameters<typeof sharingRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/documents/share')?.[2];
+      await sharingRoute(mockFastify as unknown as Parameters<typeof sharingRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/documents/share');
       const reply = { send: vi.fn() };
 
-      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: false, matchedPhrases: [] });
+      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: false, matchedPhrases: [], confidence: 0, tier: 0 as const });
       vi.spyOn(SharingService.prototype, 'share').mockResolvedValue({ success: true, channel: 'sms', piiRescanned: true, piiFound: false, downloadPayload: null, sharedAt: new Date().toISOString() } as any);
 
       await handler({ body: { documentContent: 'test', documentTitle: 'Test', channel: 'sms', recipient: '+15551234567' } }, reply);
@@ -169,11 +180,11 @@ describe('sharingRoute', () => {
 
     it('shares document via download successfully', async () => {
       const mockFastify = createMockFastify();
-      await sharingRoute(mockFastify as unknown as Parameters<typeof sharingRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/documents/share')?.[2];
+      await sharingRoute(mockFastify as unknown as Parameters<typeof sharingRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/documents/share');
       const reply = { send: vi.fn() };
 
-      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: false, matchedPhrases: [] });
+      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: false, matchedPhrases: [], confidence: 0, tier: 0 as const });
       vi.spyOn(SharingService.prototype, 'share').mockResolvedValue({ success: true, channel: 'download', piiRescanned: true, piiFound: false, downloadPayload: { url: 'data:text/plain,test' }, sharedAt: new Date().toISOString() } as any);
 
       await handler({ body: { documentContent: 'test', documentTitle: 'Test', channel: 'download' } }, reply);

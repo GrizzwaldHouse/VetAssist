@@ -43,7 +43,7 @@ function currentMonthStart(): string {
 
 export const analyticsRoute: FastifyPluginAsync = async (fastify) => {
   // POST /api/analytics/consent — record opt-in or opt-out for a session
-  fastify.post('/analytics/consent', async (request, reply) => {
+  fastify.post('/analytics/consent', {}, async (request, reply) => {
     const parsed = ConsentSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({ message: 'Invalid request', errors: parsed.error.issues });
@@ -59,14 +59,14 @@ export const analyticsRoute: FastifyPluginAsync = async (fastify) => {
   });
 
   // GET /api/analytics/consent/:sid — check consent status for a session
-  fastify.get('/analytics/consent/:sid', async (request, reply) => {
+  fastify.get('/analytics/consent/:sid', {}, async (request, reply) => {
     const { sid } = request.params as { sid: string };
     const granted = AnalyticsService.isConsentGranted(sid);
     return reply.status(200).send({ sessionId: sid, analytics: granted });
   });
 
   // POST /api/analytics/events — receive a client-side event, PII-scrub, forward to PostHog
-  fastify.post('/analytics/events', async (request, reply) => {
+  fastify.post('/analytics/events', {}, async (request, reply) => {
     const parsed = EventSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({ message: 'Invalid request', errors: parsed.error.issues });
@@ -93,7 +93,7 @@ export const analyticsRoute: FastifyPluginAsync = async (fastify) => {
   });
 
   // GET /api/analytics/impact — public endpoint, returns current-month aggregates only
-  fastify.get('/analytics/impact', async (_request, reply) => {
+  fastify.get('/analytics/impact', {}, async (_request, reply) => {
     const periodStart = currentMonthStart();
     const periodEnd   = new Date().toISOString();
     const aggregates: UsageAggregates = await AnalyticsService.getAggregates(periodStart, periodEnd);

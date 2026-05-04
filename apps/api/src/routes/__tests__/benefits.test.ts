@@ -13,7 +13,7 @@ import { BenefitsService, EligibilityChecker } from '@vetassist/benefits';
 
 function createMockFastify() {
   const routes: Array<{ method: string; url: string; handler: unknown }> = [];
-  return {
+  const instance = {
     get: vi.fn((url: string, _opts: unknown, handler: unknown) => {
       routes.push({ method: 'GET', url, handler });
     }),
@@ -22,6 +22,19 @@ function createMockFastify() {
     }),
     getRegisteredRoutes: () => routes,
   };
+  return instance;
+}
+
+// Returns the registered handler for a given method+url as a typed callable.
+function getHandler(
+  mock: ReturnType<typeof createMockFastify>,
+  method: 'get' | 'post',
+  url: string
+): (req: unknown, reply: unknown) => unknown {
+  const calls = mock[method].mock.calls as Array<[string, unknown, unknown]>;
+  const match = calls.find((c) => c[0] === url);
+  if (!match) throw new Error(`No handler registered for ${method.toUpperCase()} ${url}`);
+  return match[2] as (req: unknown, reply: unknown) => unknown;
 }
 
 describe('benefitsRoute', () => {
@@ -36,8 +49,8 @@ describe('benefitsRoute', () => {
   describe('GET /benefits', () => {
     it('returns all benefits when no query params provided', async () => {
       const mockFastify = createMockFastify();
-      await benefitsRoute(mockFastify as unknown as Parameters<typeof benefitsRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/benefits')?.[2];
+      await benefitsRoute(mockFastify as unknown as Parameters<typeof benefitsRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/benefits');
       const reply = { send: vi.fn() };
       const mockBenefits = [{ id: 'b1', name: 'Healthcare' }, { id: 'b2', name: 'Education' }];
       vi.spyOn(BenefitsService.prototype, 'search').mockReturnValue(mockBenefits as any);
@@ -49,8 +62,8 @@ describe('benefitsRoute', () => {
 
     it('searches by query string', async () => {
       const mockFastify = createMockFastify();
-      await benefitsRoute(mockFastify as unknown as Parameters<typeof benefitsRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/benefits')?.[2];
+      await benefitsRoute(mockFastify as unknown as Parameters<typeof benefitsRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/benefits');
       const reply = { send: vi.fn() };
       const searchSpy = vi.spyOn(BenefitsService.prototype, 'search').mockReturnValue([]);
 
@@ -61,8 +74,8 @@ describe('benefitsRoute', () => {
 
     it('filters by category', async () => {
       const mockFastify = createMockFastify();
-      await benefitsRoute(mockFastify as unknown as Parameters<typeof benefitsRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/benefits')?.[2];
+      await benefitsRoute(mockFastify as unknown as Parameters<typeof benefitsRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/benefits');
       const reply = { send: vi.fn() };
       const searchSpy = vi.spyOn(BenefitsService.prototype, 'search').mockReturnValue([]);
 
@@ -73,8 +86,8 @@ describe('benefitsRoute', () => {
 
     it('filters by state code', async () => {
       const mockFastify = createMockFastify();
-      await benefitsRoute(mockFastify as unknown as Parameters<typeof benefitsRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/benefits')?.[2];
+      await benefitsRoute(mockFastify as unknown as Parameters<typeof benefitsRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/benefits');
       const reply = { send: vi.fn() };
       const searchSpy = vi.spyOn(BenefitsService.prototype, 'search').mockReturnValue([]);
 
@@ -91,8 +104,8 @@ describe('benefitsRoute', () => {
   describe('GET /benefits/hidden-gems', () => {
     it('returns curated hidden gems', async () => {
       const mockFastify = createMockFastify();
-      await benefitsRoute(mockFastify as unknown as Parameters<typeof benefitsRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/benefits/hidden-gems')?.[2];
+      await benefitsRoute(mockFastify as unknown as Parameters<typeof benefitsRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/benefits/hidden-gems');
       const reply = { send: vi.fn() };
       const hiddenGems = [{ id: 'gem1', name: 'Hidden Benefit 1' }];
       vi.spyOn(BenefitsService.prototype, 'getHiddenGems').mockReturnValue(hiddenGems as any);
@@ -110,8 +123,8 @@ describe('benefitsRoute', () => {
   describe('GET /benefits/:id', () => {
     it('returns benefit by ID', async () => {
       const mockFastify = createMockFastify();
-      await benefitsRoute(mockFastify as unknown as Parameters<typeof benefitsRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/benefits/:id')?.[2];
+      await benefitsRoute(mockFastify as unknown as Parameters<typeof benefitsRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/benefits/:id');
       const reply = { send: vi.fn() };
       const mockBenefit = { id: 'b1', name: 'Healthcare', category: 'healthcare' };
       vi.spyOn(BenefitsService.prototype, 'getById').mockReturnValue(mockBenefit as any);
@@ -123,10 +136,10 @@ describe('benefitsRoute', () => {
 
     it('returns 404 when benefit not found', async () => {
       const mockFastify = createMockFastify();
-      await benefitsRoute(mockFastify as unknown as Parameters<typeof benefitsRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/benefits/:id')?.[2];
+      await benefitsRoute(mockFastify as unknown as Parameters<typeof benefitsRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/benefits/:id');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
-      vi.spyOn(BenefitsService.prototype, 'getById').mockReturnValue(undefined);
+      vi.spyOn(BenefitsService.prototype, 'getById').mockReturnValue(null as any);
 
       handler({ params: { id: 'nonexistent' } }, reply);
 
@@ -142,8 +155,8 @@ describe('benefitsRoute', () => {
   describe('POST /benefits/eligibility', () => {
     it('returns eligibility results for valid input', async () => {
       const mockFastify = createMockFastify();
-      await benefitsRoute(mockFastify as unknown as Parameters<typeof benefitsRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/benefits/eligibility')?.[2];
+      await benefitsRoute(mockFastify as unknown as Parameters<typeof benefitsRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/benefits/eligibility');
       const reply = { send: vi.fn() };
       const mockResult = {
         eligibleBenefits: ['b1', 'b2'],
@@ -171,8 +184,8 @@ describe('benefitsRoute', () => {
 
     it('rejects invalid veteran status', async () => {
       const mockFastify = createMockFastify();
-      await benefitsRoute(mockFastify as unknown as Parameters<typeof benefitsRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/benefits/eligibility')?.[2];
+      await benefitsRoute(mockFastify as unknown as Parameters<typeof benefitsRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/benefits/eligibility');
       const reply = { code: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler(
@@ -194,8 +207,8 @@ describe('benefitsRoute', () => {
 
     it('rejects invalid disability rating (out of range)', async () => {
       const mockFastify = createMockFastify();
-      await benefitsRoute(mockFastify as unknown as Parameters<typeof benefitsRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/benefits/eligibility')?.[2];
+      await benefitsRoute(mockFastify as unknown as Parameters<typeof benefitsRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/benefits/eligibility');
       const reply = { code: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler(
@@ -217,8 +230,8 @@ describe('benefitsRoute', () => {
 
     it('rejects invalid state code (not 2 chars)', async () => {
       const mockFastify = createMockFastify();
-      await benefitsRoute(mockFastify as unknown as Parameters<typeof benefitsRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/benefits/eligibility')?.[2];
+      await benefitsRoute(mockFastify as unknown as Parameters<typeof benefitsRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/benefits/eligibility');
       const reply = { code: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler(
@@ -240,8 +253,8 @@ describe('benefitsRoute', () => {
 
     it('accepts null stateCode for non-US veterans', async () => {
       const mockFastify = createMockFastify();
-      await benefitsRoute(mockFastify as unknown as Parameters<typeof benefitsRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/benefits/eligibility')?.[2];
+      await benefitsRoute(mockFastify as unknown as Parameters<typeof benefitsRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/benefits/eligibility');
       const reply = { send: vi.fn() };
       const mockResult = { eligibleBenefits: [], ineligibleBenefits: [], reasons: {} };
       vi.spyOn(EligibilityChecker.prototype, 'check').mockReturnValue(mockResult as any);

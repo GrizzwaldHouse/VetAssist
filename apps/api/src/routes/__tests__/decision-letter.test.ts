@@ -24,6 +24,17 @@ function createMockFastify() {
   };
 }
 
+function getHandler(
+  mock: ReturnType<typeof createMockFastify>,
+  method: 'post',
+  url: string
+): (req: unknown, reply: unknown) => unknown {
+  const calls = (mock[method] as ReturnType<typeof vi.fn>).mock.calls as Array<[string, unknown, unknown]>;
+  const match = calls.find((c) => c[0] === url);
+  if (!match) throw new Error(`No handler registered for ${method.toUpperCase()} ${url}`);
+  return match[2] as (req: unknown, reply: unknown) => unknown;
+}
+
 describe('decisionLetterRoute', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -36,8 +47,8 @@ describe('decisionLetterRoute', () => {
   describe('Input Validation', () => {
     it('rejects document text under 50 characters', async () => {
       const mockFastify = createMockFastify();
-      await decisionLetterRoute(mockFastify as unknown as Parameters<typeof decisionLetterRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/documents/decision-letter')?.[2];
+      await decisionLetterRoute(mockFastify as unknown as Parameters<typeof decisionLetterRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/documents/decision-letter');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       await handler({ body: { documentText: 'short' } }, reply);
@@ -47,8 +58,8 @@ describe('decisionLetterRoute', () => {
 
     it('rejects document text exceeding 50000 characters', async () => {
       const mockFastify = createMockFastify();
-      await decisionLetterRoute(mockFastify as unknown as Parameters<typeof decisionLetterRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/documents/decision-letter')?.[2];
+      await decisionLetterRoute(mockFastify as unknown as Parameters<typeof decisionLetterRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/documents/decision-letter');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       await handler({ body: { documentText: 'a'.repeat(50001) } }, reply);
@@ -64,12 +75,12 @@ describe('decisionLetterRoute', () => {
   describe('Crisis Detection', () => {
     it('detects crisis in decision letter and returns crisis response', async () => {
       const mockFastify = createMockFastify();
-      await decisionLetterRoute(mockFastify as unknown as Parameters<typeof decisionLetterRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/documents/decision-letter')?.[2];
+      await decisionLetterRoute(mockFastify as unknown as Parameters<typeof decisionLetterRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/documents/decision-letter');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
       const emitSpy = vi.spyOn(eventBus, 'emit');
 
-      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: true, matchedPhrases: ['no reason to live'], confidence: 0.9 });
+      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: true, matchedPhrases: ['no reason to live'], confidence: 0.9, tier: 1 as const });
 
       await handler({ body: { documentText: 'a'.repeat(100) + ' I have no reason to live' } }, reply);
 
@@ -91,13 +102,13 @@ describe('decisionLetterRoute', () => {
   describe('PII Detection', () => {
     it('redacts PII from decision letter before analysis', async () => {
       const mockFastify = createMockFastify();
-      await decisionLetterRoute(mockFastify as unknown as Parameters<typeof decisionLetterRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/documents/decision-letter')?.[2];
+      await decisionLetterRoute(mockFastify as unknown as Parameters<typeof decisionLetterRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/documents/decision-letter');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
       const emitSpy = vi.spyOn(eventBus, 'emit');
 
-      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: false, matchedPhrases: [] });
-      vi.spyOn(PIIDetector, 'scan').mockReturnValue({ hasPII: true, detectedTypes: ['SSN'], sanitizedText: '[REDACTED]' } as any);
+      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: false, matchedPhrases: [], confidence: 0, tier: 0 as const });
+      vi.spyOn(PIIDetector, 'scan').mockReturnValue({ hasPII: true, detectedTypes: ['SSN'], sanitizedText: '[REDACTED]', action: 'blocked' as const } as any);
       vi.spyOn(DecisionLetterHandler, 'analyze').mockResolvedValue({ summary: 'Claim denied', nextSteps: ['Appeal'] } as any);
 
       await handler({ body: { documentText: 'SSN: 123-45-6789' } }, reply);
@@ -109,12 +120,12 @@ describe('decisionLetterRoute', () => {
 
     it('passes clean text without redaction', async () => {
       const mockFastify = createMockFastify();
-      await decisionLetterRoute(mockFastify as unknown as Parameters<typeof decisionLetterRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/documents/decision-letter')?.[2];
+      await decisionLetterRoute(mockFastify as unknown as Parameters<typeof decisionLetterRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/documents/decision-letter');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
-      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: false, matchedPhrases: [] });
-      vi.spyOn(PIIDetector, 'scan').mockReturnValue({ hasPII: false, detectedTypes: [], sanitizedText: 'clean text' } as any);
+      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: false, matchedPhrases: [], confidence: 0, tier: 0 as const });
+      vi.spyOn(PIIDetector, 'scan').mockReturnValue({ hasPII: false, detectedTypes: [], sanitizedText: 'clean text', action: 'stripped' as const } as any);
       vi.spyOn(DecisionLetterHandler, 'analyze').mockResolvedValue({ summary: 'Claim granted', nextSteps: [] } as any);
 
       await handler({ body: { documentText: 'a'.repeat(100) } }, reply);
@@ -131,8 +142,8 @@ describe('decisionLetterRoute', () => {
   describe('Decision Letter Analysis', () => {
     it('returns analysis with summary and next steps', async () => {
       const mockFastify = createMockFastify();
-      await decisionLetterRoute(mockFastify as unknown as Parameters<typeof decisionLetterRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/documents/decision-letter')?.[2];
+      await decisionLetterRoute(mockFastify as unknown as Parameters<typeof decisionLetterRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/documents/decision-letter');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
       const mockAnalysis = {
         summary: 'Service connection granted for PTSD',
@@ -142,8 +153,8 @@ describe('decisionLetterRoute', () => {
         issues: [{ condition: 'PTSD', decision: 'granted', rating: 70 }],
       };
 
-      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: false, matchedPhrases: [] });
-      vi.spyOn(PIIDetector, 'scan').mockReturnValue({ hasPII: false, detectedTypes: [], sanitizedText: 'clean' } as any);
+      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: false, matchedPhrases: [], confidence: 0, tier: 0 as const });
+      vi.spyOn(PIIDetector, 'scan').mockReturnValue({ hasPII: false, detectedTypes: [], sanitizedText: 'clean', action: 'stripped' as const } as any);
       vi.spyOn(DecisionLetterHandler, 'analyze').mockResolvedValue(mockAnalysis as any);
 
       await handler({ body: { documentText: 'a'.repeat(200) } }, reply);
@@ -160,12 +171,12 @@ describe('decisionLetterRoute', () => {
 
     it('generates sessionId when not provided', async () => {
       const mockFastify = createMockFastify();
-      await decisionLetterRoute(mockFastify as unknown as Parameters<typeof decisionLetterRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/documents/decision-letter')?.[2];
+      await decisionLetterRoute(mockFastify as unknown as Parameters<typeof decisionLetterRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/documents/decision-letter');
       const reply = { send: vi.fn() };
 
-      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: false, matchedPhrases: [] });
-      vi.spyOn(PIIDetector, 'scan').mockReturnValue({ hasPII: false, detectedTypes: [], sanitizedText: 'clean' } as any);
+      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: false, matchedPhrases: [], confidence: 0, tier: 0 as const });
+      vi.spyOn(PIIDetector, 'scan').mockReturnValue({ hasPII: false, detectedTypes: [], sanitizedText: 'clean', action: 'stripped' as const } as any);
       vi.spyOn(DecisionLetterHandler, 'analyze').mockResolvedValue({ summary: 'Analysis', nextSteps: [] } as any);
 
       await handler({ body: { documentText: 'a'.repeat(100) } }, reply);
@@ -175,17 +186,17 @@ describe('decisionLetterRoute', () => {
 
     it('uses provided sessionId', async () => {
       const mockFastify = createMockFastify();
-      await decisionLetterRoute(mockFastify as unknown as Parameters<typeof decisionLetterRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/documents/decision-letter')?.[2];
+      await decisionLetterRoute(mockFastify as unknown as Parameters<typeof decisionLetterRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/documents/decision-letter');
       const reply = { send: vi.fn() };
 
-      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: false, matchedPhrases: [] });
-      vi.spyOn(PIIDetector, 'scan').mockReturnValue({ hasPII: false, detectedTypes: [], sanitizedText: 'clean' } as any);
+      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: false, matchedPhrases: [], confidence: 0, tier: 0 as const });
+      vi.spyOn(PIIDetector, 'scan').mockReturnValue({ hasPII: false, detectedTypes: [], sanitizedText: 'a'.repeat(100), action: 'stripped' as const } as any);
       vi.spyOn(DecisionLetterHandler, 'analyze').mockResolvedValue({ summary: 'Analysis', nextSteps: [] } as any);
 
       await handler({ body: { documentText: 'a'.repeat(100), sessionId: 'custom-session-123' } }, reply);
 
-      expect(DecisionLetterHandler.analyze).toHaveBeenCalledWith('custom-session-123', 'clean', expect.any(Object));
+      expect(DecisionLetterHandler.analyze).toHaveBeenCalledWith('custom-session-123', 'a'.repeat(100), expect.any(Object));
     });
   });
 });

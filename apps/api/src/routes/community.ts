@@ -25,7 +25,7 @@ const AUTHOR_MODES     = ['anonymous', 'username', 'verified'] as const;
 
 const SubmitStorySchema = z.object({
   title:         z.string().min(5).max(120),
-  content:       z.string().min(50).max(10_000),
+  content:       z.string().min(10).max(10_000),
   category:      z.enum(STORY_CATEGORIES),
   branch:        z.enum(STORY_BRANCHES).nullable().optional(),
   tags:          z.array(z.string().max(30)).max(5).default([]),
@@ -42,7 +42,7 @@ export const communityRoute: FastifyPluginAsync = async (fastify) => {
   const storyHandler  = new StoryBuilderHandler(provider, promptLoader);
 
   // POST /api/community/stories — submit a new story
-  fastify.post('/community/stories', async (request, reply) => {
+  fastify.post('/community/stories', {}, async (request, reply) => {
     const parsed = SubmitStorySchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({ message: 'Invalid request', errors: parsed.error.issues });
@@ -110,17 +110,17 @@ export const communityRoute: FastifyPluginAsync = async (fastify) => {
   });
 
   // GET /api/community/stories — list approved stories with optional filters
-  fastify.get('/community/stories', async (request, reply) => {
+  fastify.get('/community/stories', {}, async (request, reply) => {
     const query = request.query as Record<string, string>;
     const category = query['category'] as StoryCategory | undefined;
     const branch   = query['branch'] as StoryBranch | undefined;
 
     const stories = listStories({ status: 'approved', category, branch });
-    return reply.status(200).send({ stories, total: stories.length });
+    return reply.send({ stories, total: stories.length });
   });
 
   // GET /api/community/stories/:id — single story
-  fastify.get('/community/stories/:id', async (request, reply) => {
+  fastify.get('/community/stories/:id', {}, async (request, reply) => {
     const { id } = request.params as { id: string };
     const story = getStoryById(id);
     if (!story || story.status !== 'approved') {
@@ -130,7 +130,7 @@ export const communityRoute: FastifyPluginAsync = async (fastify) => {
   });
 
   // POST /api/community/stories/:id/upvote — increment upvote count
-  fastify.post('/community/stories/:id/upvote', async (request, reply) => {
+  fastify.post('/community/stories/:id/upvote', {}, async (request, reply) => {
     const { id } = request.params as { id: string };
     const story = upvoteStory(id);
     if (!story) return reply.status(404).send({ message: 'Story not found.' });
@@ -138,7 +138,7 @@ export const communityRoute: FastifyPluginAsync = async (fastify) => {
   });
 
   // POST /api/community/stories/:id/report — community report (Layer-2)
-  fastify.post('/community/stories/:id/report', async (request, reply) => {
+  fastify.post('/community/stories/:id/report', {}, async (request, reply) => {
     const { id } = request.params as { id: string };
     const parsed = ReportSchema.safeParse(request.body);
     if (!parsed.success) return reply.status(400).send({ message: 'Invalid request' });
@@ -151,7 +151,7 @@ export const communityRoute: FastifyPluginAsync = async (fastify) => {
   });
 
   // GET /api/community/admin/queue — admin mod queue (Layer-3)
-  fastify.get('/community/admin/queue', async (_request, reply) => {
+  fastify.get('/community/admin/queue', {}, async (_request, reply) => {
     const queue = listQueue();
     return reply.status(200).send({ queue, total: queue.length });
   });

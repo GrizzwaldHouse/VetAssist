@@ -16,12 +16,23 @@ import { eventBus, EVENTS } from '@vetassist/events';
 
 function createMockFastify() {
   const routes: Array<{ method: string; url: string; handler: unknown }> = [];
-  return {
+  const instance = {
     post: vi.fn((url: string, _opts: unknown, handler: unknown) => {
       routes.push({ method: 'POST', url, handler });
     }),
     getRegisteredRoutes: () => routes,
   };
+  return instance;
+}
+
+function getHandler(
+  mock: ReturnType<typeof createMockFastify>,
+  url: string
+): (req: unknown, reply: unknown) => unknown {
+  const calls = mock.post.mock.calls as Array<[string, unknown, unknown]>;
+  const match = calls.find((c) => c[0] === url);
+  if (!match) throw new Error(`No handler registered for POST ${url}`);
+  return match[2] as (req: unknown, reply: unknown) => unknown;
 }
 
 describe('chatRoute', () => {
@@ -40,8 +51,8 @@ describe('chatRoute', () => {
   describe('Input Validation', () => {
     it('rejects empty text', async () => {
       const mockFastify = createMockFastify();
-      await chatRoute(mockFastify as unknown as Parameters<typeof chatRoute>[0]);
-      const handler = mockFastify.post.mock.calls[0][2];
+      await chatRoute(mockFastify as unknown as Parameters<typeof chatRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, '/chat');
       const reply = { code: vi.fn().mockReturnThis(), send: vi.fn() };
 
       await handler(
@@ -54,8 +65,8 @@ describe('chatRoute', () => {
 
     it('rejects text exceeding 4000 characters', async () => {
       const mockFastify = createMockFastify();
-      await chatRoute(mockFastify as unknown as Parameters<typeof chatRoute>[0]);
-      const handler = mockFastify.post.mock.calls[0][2];
+      await chatRoute(mockFastify as unknown as Parameters<typeof chatRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, '/chat');
       const reply = { code: vi.fn().mockReturnThis(), send: vi.fn() };
 
       await handler(
@@ -68,18 +79,21 @@ describe('chatRoute', () => {
 
     it('accepts valid sessionId as UUID', async () => {
       const mockFastify = createMockFastify();
-      await chatRoute(mockFastify as unknown as Parameters<typeof chatRoute>[0]);
-      const handler = mockFastify.post.mock.calls[0][2];
+      await chatRoute(mockFastify as unknown as Parameters<typeof chatRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, '/chat');
       const reply = { code: vi.fn().mockReturnThis(), send: vi.fn() };
 
       vi.spyOn(PIIDetector, 'scanAndEmit').mockResolvedValue({
         hasPII: false,
         detectedTypes: [],
         sanitizedText: 'hello',
+        action: 'stripped' as const,
       });
       vi.spyOn(CrisisDetector, 'detectAndEmit').mockResolvedValue({
         isCrisis: false,
+        confidence: 0,
         matchedPhrases: [],
+        tier: 0 as const,
       });
       vi.spyOn(ChatPipeline, 'run').mockResolvedValue({
         sessionId: 'test-session',
@@ -104,14 +118,15 @@ describe('chatRoute', () => {
   describe('PII Detection', () => {
     it('blocks message with SSN and returns 422', async () => {
       const mockFastify = createMockFastify();
-      await chatRoute(mockFastify as unknown as Parameters<typeof chatRoute>[0]);
-      const handler = mockFastify.post.mock.calls[0][2];
+      await chatRoute(mockFastify as unknown as Parameters<typeof chatRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, '/chat');
       const reply = { code: vi.fn().mockReturnThis(), send: vi.fn() };
 
       vi.spyOn(PIIDetector, 'scanAndEmit').mockResolvedValue({
         hasPII: true,
         detectedTypes: ['SSN'],
         sanitizedText: 'My SSN is [REDACTED]',
+        action: 'blocked' as const,
       });
 
       await handler(
@@ -130,14 +145,15 @@ describe('chatRoute', () => {
 
     it('blocks message with VA file number and returns 422', async () => {
       const mockFastify = createMockFastify();
-      await chatRoute(mockFastify as unknown as Parameters<typeof chatRoute>[0]);
-      const handler = mockFastify.post.mock.calls[0][2];
+      await chatRoute(mockFastify as unknown as Parameters<typeof chatRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, '/chat');
       const reply = { code: vi.fn().mockReturnThis(), send: vi.fn() };
 
       vi.spyOn(PIIDetector, 'scanAndEmit').mockResolvedValue({
         hasPII: true,
         detectedTypes: ['VA_FILE_NUMBER'],
         sanitizedText: 'file [REDACTED]',
+        action: 'blocked' as const,
       });
 
       await handler(
@@ -155,14 +171,15 @@ describe('chatRoute', () => {
 
     it('blocks message with credit card number and returns 422', async () => {
       const mockFastify = createMockFastify();
-      await chatRoute(mockFastify as unknown as Parameters<typeof chatRoute>[0]);
-      const handler = mockFastify.post.mock.calls[0][2];
+      await chatRoute(mockFastify as unknown as Parameters<typeof chatRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, '/chat');
       const reply = { code: vi.fn().mockReturnThis(), send: vi.fn() };
 
       vi.spyOn(PIIDetector, 'scanAndEmit').mockResolvedValue({
         hasPII: true,
         detectedTypes: ['CREDIT_CARD'],
         sanitizedText: 'card [REDACTED]',
+        action: 'blocked' as const,
       });
 
       await handler(
@@ -181,18 +198,21 @@ describe('chatRoute', () => {
   describe('Crisis Detection', () => {
     it('detects suicide ideation and returns crisis response', async () => {
       const mockFastify = createMockFastify();
-      await chatRoute(mockFastify as unknown as Parameters<typeof chatRoute>[0]);
-      const handler = mockFastify.post.mock.calls[0][2];
+      await chatRoute(mockFastify as unknown as Parameters<typeof chatRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, '/chat');
       const reply = { code: vi.fn().mockReturnThis(), send: vi.fn() };
 
       vi.spyOn(PIIDetector, 'scanAndEmit').mockResolvedValue({
         hasPII: false,
         detectedTypes: [],
         sanitizedText: 'I want to kill myself',
+        action: 'stripped' as const,
       });
       vi.spyOn(CrisisDetector, 'detectAndEmit').mockResolvedValue({
         isCrisis: true,
+        confidence: 1,
         matchedPhrases: ['kill myself'],
+        tier: 1 as const,
       });
       vi.spyOn(CrisisDetector, 'getCrisisResponseText').mockReturnValue(
         'If you are in crisis, please call 988'
@@ -214,18 +234,21 @@ describe('chatRoute', () => {
 
     it('does not trigger crisis for non-crisis frustration', async () => {
       const mockFastify = createMockFastify();
-      await chatRoute(mockFastify as unknown as Parameters<typeof chatRoute>[0]);
-      const handler = mockFastify.post.mock.calls[0][2];
+      await chatRoute(mockFastify as unknown as Parameters<typeof chatRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, '/chat');
       const reply = { code: vi.fn().mockReturnThis(), send: vi.fn() };
 
       vi.spyOn(PIIDetector, 'scanAndEmit').mockResolvedValue({
         hasPII: false,
         detectedTypes: [],
         sanitizedText: "I don't see the point in filing online",
+        action: 'stripped' as const,
       });
       vi.spyOn(CrisisDetector, 'detectAndEmit').mockResolvedValue({
         isCrisis: false,
+        confidence: 0,
         matchedPhrases: [],
+        tier: 0 as const,
       });
       vi.spyOn(ChatPipeline, 'run').mockResolvedValue({
         sessionId: 'test-session',
@@ -255,18 +278,21 @@ describe('chatRoute', () => {
   describe('AI Pipeline', () => {
     it('returns AI response with citations for clean input', async () => {
       const mockFastify = createMockFastify();
-      await chatRoute(mockFastify as unknown as Parameters<typeof chatRoute>[0]);
-      const handler = mockFastify.post.mock.calls[0][2];
+      await chatRoute(mockFastify as unknown as Parameters<typeof chatRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, '/chat');
       const reply = { code: vi.fn().mockReturnThis(), send: vi.fn() };
 
       vi.spyOn(PIIDetector, 'scanAndEmit').mockResolvedValue({
         hasPII: false,
         detectedTypes: [],
         sanitizedText: 'What benefits am I eligible for?',
+        action: 'stripped' as const,
       });
       vi.spyOn(CrisisDetector, 'detectAndEmit').mockResolvedValue({
         isCrisis: false,
+        confidence: 0,
         matchedPhrases: [],
+        tier: 0 as const,
       });
       vi.spyOn(ChatPipeline, 'run').mockResolvedValue({
         sessionId: 'test-session',
@@ -291,18 +317,21 @@ describe('chatRoute', () => {
 
     it('generates new sessionId when not provided', async () => {
       const mockFastify = createMockFastify();
-      await chatRoute(mockFastify as unknown as Parameters<typeof chatRoute>[0]);
-      const handler = mockFastify.post.mock.calls[0][2];
+      await chatRoute(mockFastify as unknown as Parameters<typeof chatRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, '/chat');
       const reply = { code: vi.fn().mockReturnThis(), send: vi.fn() };
 
       vi.spyOn(PIIDetector, 'scanAndEmit').mockResolvedValue({
         hasPII: false,
         detectedTypes: [],
         sanitizedText: 'hello',
+        action: 'stripped' as const,
       });
       vi.spyOn(CrisisDetector, 'detectAndEmit').mockResolvedValue({
         isCrisis: false,
+        confidence: 0,
         matchedPhrases: [],
+        tier: 0 as const,
       });
       vi.spyOn(ChatPipeline, 'run').mockResolvedValue({
         sessionId: 'generated-uuid',
@@ -328,8 +357,8 @@ describe('chatRoute', () => {
   describe('Event Emission', () => {
     it('emits USER_INPUT_RECEIVED event before processing', async () => {
       const mockFastify = createMockFastify();
-      await chatRoute(mockFastify as unknown as Parameters<typeof chatRoute>[0]);
-      const handler = mockFastify.post.mock.calls[0][2];
+      await chatRoute(mockFastify as unknown as Parameters<typeof chatRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, '/chat');
       const reply = { code: vi.fn().mockReturnThis(), send: vi.fn() };
       const emitSpy = vi.spyOn(eventBus, 'emit');
 
@@ -337,10 +366,13 @@ describe('chatRoute', () => {
         hasPII: false,
         detectedTypes: [],
         sanitizedText: 'test',
+        action: 'stripped' as const,
       });
       vi.spyOn(CrisisDetector, 'detectAndEmit').mockResolvedValue({
         isCrisis: false,
+        confidence: 0,
         matchedPhrases: [],
+        tier: 0 as const,
       });
       vi.spyOn(ChatPipeline, 'run').mockResolvedValue({
         sessionId: 'test',

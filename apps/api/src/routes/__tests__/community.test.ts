@@ -7,8 +7,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { communityRoute } from '../community.js';
 import { CrisisDetector } from '@vetassist/crisis';
 import { PIIDetector } from '@vetassist/pii';
-import { moderateContent, enqueue, listQueue } from '@vetassist/moderation';
-import { createStory, listStories, upvoteStory, getStoryById } from '@vetassist/community';
+import * as ModerationModule from '@vetassist/moderation';
+import * as CommunityModule from '@vetassist/community';
+const { moderateContent, enqueue, listQueue } = ModerationModule;
+const { createStory, listStories, upvoteStory, getStoryById } = CommunityModule;
 import { StoryBuilderHandler } from '@vetassist/ai';
 import { eventBus, EVENTS } from '@vetassist/events';
 
@@ -29,6 +31,17 @@ function createMockFastify() {
   };
 }
 
+function getHandler(
+  mock: ReturnType<typeof createMockFastify>,
+  method: 'get' | 'post',
+  url: string
+): (req: unknown, reply: unknown) => unknown {
+  const calls = (mock[method] as ReturnType<typeof vi.fn>).mock.calls as Array<[string, unknown, unknown]>;
+  const match = calls.find((c) => c[0] === url);
+  if (!match) throw new Error(`No handler registered for ${method.toUpperCase()} ${url}`);
+  return match[2] as (req: unknown, reply: unknown) => unknown;
+}
+
 describe('communityRoute', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -41,8 +54,8 @@ describe('communityRoute', () => {
   describe('POST /community/stories', () => {
     it('rejects story with title too short', async () => {
       const mockFastify = createMockFastify();
-      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/community/stories')?.[2];
+      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/community/stories');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       await handler({ body: { title: 'Hi', content: 'a'.repeat(50), category: 'general' } }, reply);
@@ -52,8 +65,8 @@ describe('communityRoute', () => {
 
     it('rejects story with content too short', async () => {
       const mockFastify = createMockFastify();
-      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/community/stories')?.[2];
+      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/community/stories');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       await handler({ body: { title: 'My Story', content: 'Short', category: 'general' } }, reply);
@@ -63,8 +76,8 @@ describe('communityRoute', () => {
 
     it('rejects invalid category', async () => {
       const mockFastify = createMockFastify();
-      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/community/stories')?.[2];
+      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/community/stories');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       await handler({ body: { title: 'My Story', content: 'a'.repeat(50), category: 'invalid' } }, reply);
@@ -74,12 +87,12 @@ describe('communityRoute', () => {
 
     it('detects crisis content and returns crisis response', async () => {
       const mockFastify = createMockFastify();
-      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/community/stories')?.[2];
+      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/community/stories');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
       const emitSpy = vi.spyOn(eventBus, 'emit');
 
-      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: true, matchedPhrases: ['kill myself'], confidence: 0.9 });
+      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: true, matchedPhrases: ['kill myself'], confidence: 0.9, tier: 1 as const });
 
       await handler({ body: { title: 'My Story', content: 'I want to kill myself', category: 'general' } }, reply);
 
@@ -95,37 +108,36 @@ describe('communityRoute', () => {
 
     it('sanitizes PII from story content', async () => {
       const mockFastify = createMockFastify();
-      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/community/stories')?.[2];
+      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/community/stories');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
       const emitSpy = vi.spyOn(eventBus, 'emit');
 
-      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: false, matchedPhrases: [] });
-      vi.spyOn(PIIDetector, 'scan').mockReturnValue({ hasPII: true, detectedTypes: ['SSN'], sanitizedText: '[REDACTED]' } as any);
+      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: false, matchedPhrases: [], confidence: 0, tier: 0 as const });
+      vi.spyOn(PIIDetector, 'scan').mockReturnValue({ hasPII: true, detectedTypes: ['SSN'], sanitizedText: 'My SSN is [REDACTED]', action: 'blocked' as const } as any);
       vi.spyOn(StoryBuilderHandler.prototype, 'extractTips').mockResolvedValue([]);
-      vi.spyOn(PIIDetector, 'scan').mockReturnValue({ hasPII: true, detectedTypes: ['SSN'], sanitizedText: 'My SSN is [REDACTED]' } as any);
-      const mockStory = { id: 's1', title: 'My Story', content: '[REDACTED]', status: 'pending' };
-      vi.spyOn(createStory).mockReturnValue(mockStory as any);
-      vi.spyOn(moderateContent).mockReturnValue({ action: 'approved', requiresAdminReview: false, flags: [], toxicityScore: 0 } as any);
+      vi.spyOn(ModerationModule, 'moderateContent').mockReturnValue({ action: 'approved', requiresAdminReview: false, flags: [], toxicityScore: 0 } as any);
+      const mockStory = { id: 's1', title: 'My Story', content: 'My SSN is [REDACTED]', status: 'approved' };
+      vi.spyOn(CommunityModule, 'createStory').mockReturnValue(mockStory as any);
 
       await handler({ body: { title: 'My Story', content: 'My SSN is 123-45-6789', category: 'general' } }, reply);
 
       expect(emitSpy).toHaveBeenCalledWith(EVENTS.PII_DETECTED, expect.objectContaining({ type: 'SSN' }));
-      expect(createStory).toHaveBeenCalledWith(expect.objectContaining({ content: '[REDACTED]' }));
+      expect(CommunityModule.createStory).toHaveBeenCalledWith(expect.objectContaining({ content: 'My SSN is [REDACTED]' }));
     });
 
     it('returns approved status for clean content', async () => {
       const mockFastify = createMockFastify();
-      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/community/stories')?.[2];
+      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/community/stories');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
-      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: false, matchedPhrases: [] });
-      vi.spyOn(PIIDetector, 'scan').mockReturnValue({ hasPII: false, detectedTypes: [], sanitizedText: 'clean content' } as any);
+      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: false, matchedPhrases: [], confidence: 0, tier: 0 as const });
+      vi.spyOn(PIIDetector, 'scan').mockReturnValue({ hasPII: false, detectedTypes: [], sanitizedText: 'clean content', action: 'stripped' as const } as any);
       vi.spyOn(StoryBuilderHandler.prototype, 'extractTips').mockResolvedValue([{ tip: 'Great story' }] as any);
-      vi.spyOn(moderateContent).mockReturnValue({ action: 'approved', requiresAdminReview: false, flags: [], toxicityScore: 0 } as any);
+      vi.spyOn(ModerationModule, 'moderateContent').mockReturnValue({ action: 'approved', requiresAdminReview: false, flags: [], toxicityScore: 0 } as any);
       const mockStory = { id: 's1', title: 'My Story', content: 'clean content', status: 'approved', tips: [{ tip: 'Great story' }] };
-      vi.spyOn(createStory).mockReturnValue(mockStory as any);
+      vi.spyOn(CommunityModule, 'createStory').mockReturnValue(mockStory as any);
 
       await handler({ body: { title: 'My Story', content: 'a'.repeat(100), category: 'general' } }, reply);
 
@@ -134,15 +146,15 @@ describe('communityRoute', () => {
 
     it('returns pending status for flagged content', async () => {
       const mockFastify = createMockFastify();
-      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/community/stories')?.[2];
+      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/community/stories');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
-      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: false, matchedPhrases: [] });
-      vi.spyOn(PIIDetector, 'scan').mockReturnValue({ hasPII: false, detectedTypes: [], sanitizedText: 'content' } as any);
-      vi.spyOn(moderateContent).mockReturnValue({ action: 'pending', requiresAdminReview: true, flags: ['toxicity'], toxicityScore: 0.8 } as any);
+      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: false, matchedPhrases: [], confidence: 0, tier: 0 as const });
+      vi.spyOn(PIIDetector, 'scan').mockReturnValue({ hasPII: false, detectedTypes: [], sanitizedText: 'content', action: 'stripped' as const } as any);
+      vi.spyOn(ModerationModule, 'moderateContent').mockReturnValue({ action: 'pending', requiresAdminReview: true, flags: ['toxicity'], toxicityScore: 0.8 } as any);
       const mockStory = { id: 's1', title: 'My Story', content: 'content', status: 'pending', tips: [] };
-      vi.spyOn(createStory).mockReturnValue(mockStory as any);
+      vi.spyOn(CommunityModule, 'createStory').mockReturnValue(mockStory as any);
       vi.spyOn(StoryBuilderHandler.prototype, 'extractTips').mockResolvedValue([]);
 
       await handler({ body: { title: 'My Story', content: 'a'.repeat(100), category: 'general' } }, reply);
@@ -152,16 +164,16 @@ describe('communityRoute', () => {
 
     it('adds story to mod queue when flagged', async () => {
       const mockFastify = createMockFastify();
-      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/community/stories')?.[2];
+      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/community/stories');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
-      const enqueueSpy = vi.spyOn(enqueue);
+      const enqueueSpy = vi.spyOn(ModerationModule, 'enqueue');
 
-      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: false, matchedPhrases: [] });
-      vi.spyOn(PIIDetector, 'scan').mockReturnValue({ hasPII: false, detectedTypes: [], sanitizedText: 'content' } as any);
-      vi.spyOn(moderateContent).mockReturnValue({ action: 'pending', requiresAdminReview: true, flags: ['toxicity'], toxicityScore: 0.8 } as any);
+      vi.spyOn(CrisisDetector, 'detectCrisis').mockResolvedValue({ isCrisis: false, matchedPhrases: [], confidence: 0, tier: 0 as const });
+      vi.spyOn(PIIDetector, 'scan').mockReturnValue({ hasPII: false, detectedTypes: [], sanitizedText: 'content', action: 'stripped' as const } as any);
+      vi.spyOn(ModerationModule, 'moderateContent').mockReturnValue({ action: 'pending', requiresAdminReview: true, flags: ['toxicity'], toxicityScore: 0.8 } as any);
       const mockStory = { id: 's1', title: 'My Story', content: 'content', status: 'pending', tips: [] };
-      vi.spyOn(createStory).mockReturnValue(mockStory as any);
+      vi.spyOn(CommunityModule, 'createStory').mockReturnValue(mockStory as any);
       vi.spyOn(StoryBuilderHandler.prototype, 'extractTips').mockResolvedValue([]);
 
       await handler({ body: { title: 'My Story', content: 'a'.repeat(100), category: 'general' } }, reply);
@@ -177,28 +189,28 @@ describe('communityRoute', () => {
   describe('GET /community/stories', () => {
     it('returns approved stories', async () => {
       const mockFastify = createMockFastify();
-      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/community/stories')?.[2];
+      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/community/stories');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
       const mockStories = [{ id: 's1', title: 'Story 1', status: 'approved' }];
-      vi.spyOn(listStories).mockReturnValue(mockStories as any);
+      vi.spyOn(CommunityModule, 'listStories').mockReturnValue(mockStories as any);
 
       handler({ query: {} }, reply);
 
       expect(reply.send).toHaveBeenCalledWith({ stories: mockStories, total: 1 });
-      expect(listStories).toHaveBeenCalledWith({ status: 'approved', category: undefined, branch: undefined });
+      expect(CommunityModule.listStories).toHaveBeenCalledWith({ status: 'approved', category: undefined, branch: undefined });
     });
 
     it('filters by category', async () => {
       const mockFastify = createMockFastify();
-      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/community/stories')?.[2];
+      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/community/stories');
       const reply = { send: vi.fn() };
-      vi.spyOn(listStories).mockReturnValue([]);
+      vi.spyOn(CommunityModule, 'listStories').mockReturnValue([]);
 
       handler({ query: { category: 'cp_exam' } }, reply);
 
-      expect(listStories).toHaveBeenCalledWith({ status: 'approved', category: 'cp_exam', branch: undefined });
+      expect(CommunityModule.listStories).toHaveBeenCalledWith({ status: 'approved', category: 'cp_exam', branch: undefined });
     });
   });
 
@@ -209,11 +221,11 @@ describe('communityRoute', () => {
   describe('GET /community/stories/:id', () => {
     it('returns approved story by ID', async () => {
       const mockFastify = createMockFastify();
-      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/community/stories/:id')?.[2];
+      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/community/stories/:id');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
       const mockStory = { id: 's1', title: 'Story 1', status: 'approved' };
-      vi.spyOn(getStoryById).mockReturnValue(mockStory as any);
+      vi.spyOn(CommunityModule, 'getStoryById').mockReturnValue(mockStory as any);
 
       handler({ params: { id: 's1' } }, reply);
 
@@ -222,10 +234,10 @@ describe('communityRoute', () => {
 
     it('returns 404 for non-existent story', async () => {
       const mockFastify = createMockFastify();
-      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/community/stories/:id')?.[2];
+      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/community/stories/:id');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
-      vi.spyOn(getStoryById).mockReturnValue(undefined);
+      vi.spyOn(CommunityModule, 'getStoryById').mockReturnValue(null as any);
 
       handler({ params: { id: 'nonexistent' } }, reply);
 
@@ -235,10 +247,10 @@ describe('communityRoute', () => {
 
     it('returns 404 for pending story', async () => {
       const mockFastify = createMockFastify();
-      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/community/stories/:id')?.[2];
+      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/community/stories/:id');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
-      vi.spyOn(getStoryById).mockReturnValue({ id: 's1', status: 'pending' } as any);
+      vi.spyOn(CommunityModule, 'getStoryById').mockReturnValue({ id: 's1', status: 'pending' } as any);
 
       handler({ params: { id: 's1' } }, reply);
 
@@ -253,10 +265,10 @@ describe('communityRoute', () => {
   describe('POST /community/stories/:id/upvote', () => {
     it('increments upvote count', async () => {
       const mockFastify = createMockFastify();
-      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/community/stories/:id/upvote')?.[2];
+      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/community/stories/:id/upvote');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
-      vi.spyOn(upvoteStory).mockReturnValue({ id: 's1', upvotes: 10 } as any);
+      vi.spyOn(CommunityModule, 'upvoteStory').mockReturnValue({ id: 's1', upvotes: 10 } as any);
 
       handler({ params: { id: 's1' } }, reply);
 
@@ -265,10 +277,10 @@ describe('communityRoute', () => {
 
     it('returns 404 for non-existent story', async () => {
       const mockFastify = createMockFastify();
-      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/community/stories/:id/upvote')?.[2];
+      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/community/stories/:id/upvote');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
-      vi.spyOn(upvoteStory).mockReturnValue(undefined);
+      vi.spyOn(CommunityModule, 'upvoteStory').mockReturnValue(null as any);
 
       handler({ params: { id: 'nonexistent' } }, reply);
 
@@ -284,10 +296,10 @@ describe('communityRoute', () => {
   describe('POST /community/stories/:id/report', () => {
     it('accepts report with optional reason', async () => {
       const mockFastify = createMockFastify();
-      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/community/stories/:id/report')?.[2];
+      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/community/stories/:id/report');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
-      vi.spyOn(getStoryById).mockReturnValue({ id: 's1' } as any);
+      vi.spyOn(CommunityModule, 'getStoryById').mockReturnValue({ id: 's1' } as any);
 
       handler({ params: { id: 's1' }, body: { reason: 'Inappropriate content' } }, reply);
 
@@ -298,10 +310,10 @@ describe('communityRoute', () => {
 
     it('accepts report without reason', async () => {
       const mockFastify = createMockFastify();
-      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/community/stories/:id/report')?.[2];
+      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/community/stories/:id/report');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
-      vi.spyOn(getStoryById).mockReturnValue({ id: 's1' } as any);
+      vi.spyOn(CommunityModule, 'getStoryById').mockReturnValue({ id: 's1' } as any);
 
       handler({ params: { id: 's1' }, body: {} }, reply);
 
@@ -310,8 +322,8 @@ describe('communityRoute', () => {
 
     it('rejects invalid report request', async () => {
       const mockFastify = createMockFastify();
-      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/community/stories/:id/report')?.[2];
+      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/community/stories/:id/report');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler({ params: { id: 's1' }, body: { reason: 'a'.repeat(201) } }, reply);
@@ -321,10 +333,10 @@ describe('communityRoute', () => {
 
     it('returns 404 for non-existent story', async () => {
       const mockFastify = createMockFastify();
-      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/community/stories/:id/report')?.[2];
+      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/community/stories/:id/report');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
-      vi.spyOn(getStoryById).mockReturnValue(undefined);
+      vi.spyOn(CommunityModule, 'getStoryById').mockReturnValue(null as any);
 
       handler({ params: { id: 'nonexistent' }, body: {} }, reply);
 
@@ -339,11 +351,11 @@ describe('communityRoute', () => {
   describe('GET /community/admin/queue', () => {
     it('returns moderation queue', async () => {
       const mockFastify = createMockFastify();
-      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/community/admin/queue')?.[2];
+      await communityRoute(mockFastify as unknown as Parameters<typeof communityRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/community/admin/queue');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
       const mockQueue = [{ id: 's1', title: 'Flagged Story', flags: ['toxicity'] }];
-      vi.spyOn(listQueue).mockReturnValue(mockQueue as any);
+      vi.spyOn(ModerationModule, 'listQueue').mockReturnValue(mockQueue as any);
 
       handler({}, reply);
 

@@ -343,7 +343,7 @@ function evaluateEligibility(input: VREEligibilityInput): VREEligibilityResult {
 export const vreRoute: FastifyPluginAsync = async (fastify) => {
 
   // GET /api/vre/guide — full static guide: tracks, comparison, application steps
-  fastify.get('/vre/guide', async (_request, reply) => {
+  fastify.get('/vre/guide', {}, async (_request, reply) => {
     const guide: VREGuideResponse = {
       tracks:           VRE_TRACKS,
       comparison:       VRE_COMPARISON,
@@ -354,7 +354,7 @@ export const vreRoute: FastifyPluginAsync = async (fastify) => {
   });
 
   // GET /api/vre/eligibility — eligibility check based on query params
-  fastify.get('/vre/eligibility', async (request, reply) => {
+  fastify.get('/vre/eligibility', {}, async (request, reply) => {
     const parsed = EligibilityQuerySchema.safeParse(request.query);
     if (!parsed.success) {
       return reply.status(400).send({ message: 'Invalid eligibility parameters', errors: parsed.error.issues });

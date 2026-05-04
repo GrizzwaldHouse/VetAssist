@@ -20,6 +20,17 @@ function createMockFastify() {
   };
 }
 
+function getHandler(
+  mock: ReturnType<typeof createMockFastify>,
+  method: 'post',
+  url: string
+): (req: unknown, reply: unknown) => unknown {
+  const calls = (mock[method] as ReturnType<typeof vi.fn>).mock.calls as Array<[string, unknown, unknown]>;
+  const match = calls.find((c) => c[0] === url);
+  if (!match) throw new Error(`No handler registered for ${method.toUpperCase()} ${url}`);
+  return match[2] as (req: unknown, reply: unknown) => unknown;
+}
+
 describe('inlineReviewRoute', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -28,8 +39,8 @@ describe('inlineReviewRoute', () => {
   describe('Input Validation', () => {
     it('rejects text under 10 characters', async () => {
       const mockFastify = createMockFastify();
-      await inlineReviewRoute(mockFastify as unknown as Parameters<typeof inlineReviewRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/documents/review/inline')?.[2];
+      await inlineReviewRoute(mockFastify as unknown as Parameters<typeof inlineReviewRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/documents/review/inline');
       const reply = { code: vi.fn().mockReturnThis(), send: vi.fn() };
 
       await handler({ body: { text: 'short' } }, reply);
@@ -39,8 +50,8 @@ describe('inlineReviewRoute', () => {
 
     it('rejects text exceeding 20000 characters', async () => {
       const mockFastify = createMockFastify();
-      await inlineReviewRoute(mockFastify as unknown as Parameters<typeof inlineReviewRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/documents/review/inline')?.[2];
+      await inlineReviewRoute(mockFastify as unknown as Parameters<typeof inlineReviewRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/documents/review/inline');
       const reply = { code: vi.fn().mockReturnThis(), send: vi.fn() };
 
       await handler({ body: { text: 'a'.repeat(20001) } }, reply);
@@ -50,8 +61,8 @@ describe('inlineReviewRoute', () => {
 
     it('rejects invalid scoringMode', async () => {
       const mockFastify = createMockFastify();
-      await inlineReviewRoute(mockFastify as unknown as Parameters<typeof inlineReviewRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/documents/review/inline')?.[2];
+      await inlineReviewRoute(mockFastify as unknown as Parameters<typeof inlineReviewRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/documents/review/inline');
       const reply = { code: vi.fn().mockReturnThis(), send: vi.fn() };
 
       await handler({ body: { text: 'a'.repeat(20), scoringMode: 'invalid' } }, reply);
@@ -63,11 +74,11 @@ describe('inlineReviewRoute', () => {
   describe('PII Detection', () => {
     it('blocks review when PII detected', async () => {
       const mockFastify = createMockFastify();
-      await inlineReviewRoute(mockFastify as unknown as Parameters<typeof inlineReviewRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/documents/review/inline')?.[2];
+      await inlineReviewRoute(mockFastify as unknown as Parameters<typeof inlineReviewRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/documents/review/inline');
       const reply = { code: vi.fn().mockReturnThis(), send: vi.fn() };
 
-      vi.spyOn(PIIDetector, 'scanAndEmit').mockResolvedValue({ hasPII: true, detectedTypes: ['SSN'], sanitizedText: '[REDACTED]' });
+      vi.spyOn(PIIDetector, 'scanAndEmit').mockResolvedValue({ hasPII: true, detectedTypes: ['SSN'], sanitizedText: '[REDACTED]', action: 'blocked' as const });
 
       await handler({ body: { text: 'My SSN is 123-45-6789' } }, reply);
 
@@ -81,12 +92,12 @@ describe('inlineReviewRoute', () => {
   describe('Crisis Detection', () => {
     it('returns crisis response when distress detected', async () => {
       const mockFastify = createMockFastify();
-      await inlineReviewRoute(mockFastify as unknown as Parameters<typeof inlineReviewRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/documents/review/inline')?.[2];
+      await inlineReviewRoute(mockFastify as unknown as Parameters<typeof inlineReviewRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/documents/review/inline');
       const reply = { code: vi.fn().mockReturnThis(), send: vi.fn() };
 
-      vi.spyOn(PIIDetector, 'scanAndEmit').mockResolvedValue({ hasPII: false, detectedTypes: [], sanitizedText: 'test' });
-      vi.spyOn(CrisisDetector, 'detectAndEmit').mockResolvedValue({ isCrisis: true, matchedPhrases: ['kill myself'] });
+      vi.spyOn(PIIDetector, 'scanAndEmit').mockResolvedValue({ hasPII: false, detectedTypes: [], sanitizedText: 'test', action: 'stripped' as const });
+      vi.spyOn(CrisisDetector, 'detectAndEmit').mockResolvedValue({ isCrisis: true, matchedPhrases: ['kill myself'], confidence: 1, tier: 1 as const });
 
       await handler({ body: { text: 'I want to kill myself' } }, reply);
 
@@ -99,8 +110,8 @@ describe('inlineReviewRoute', () => {
   describe('Inline Review', () => {
     it('returns diff-based review with suggestions', async () => {
       const mockFastify = createMockFastify();
-      await inlineReviewRoute(mockFastify as unknown as Parameters<typeof inlineReviewRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/documents/review/inline')?.[2];
+      await inlineReviewRoute(mockFastify as unknown as Parameters<typeof inlineReviewRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/documents/review/inline');
       const reply = { send: vi.fn() };
       const mockResult = {
         sessionId: 's1', overall: 75, mode: 'encouraging',
@@ -110,8 +121,8 @@ describe('inlineReviewRoute', () => {
         ],
       };
 
-      vi.spyOn(PIIDetector, 'scanAndEmit').mockResolvedValue({ hasPII: false, detectedTypes: [], sanitizedText: 'test' });
-      vi.spyOn(CrisisDetector, 'detectAndEmit').mockResolvedValue({ isCrisis: false, matchedPhrases: [] });
+      vi.spyOn(PIIDetector, 'scanAndEmit').mockResolvedValue({ hasPII: false, detectedTypes: [], sanitizedText: 'test', action: 'stripped' as const });
+      vi.spyOn(CrisisDetector, 'detectAndEmit').mockResolvedValue({ isCrisis: false, matchedPhrases: [], confidence: 0, tier: 0 as const });
       vi.spyOn(InlineDiffHandler, 'review').mockResolvedValue(mockResult as any);
 
       await handler({ body: { text: 'a'.repeat(50) } }, reply);
@@ -121,12 +132,12 @@ describe('inlineReviewRoute', () => {
 
     it('uses strict scoring mode when requested', async () => {
       const mockFastify = createMockFastify();
-      await inlineReviewRoute(mockFastify as unknown as Parameters<typeof inlineReviewRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/documents/review/inline')?.[2];
+      await inlineReviewRoute(mockFastify as unknown as Parameters<typeof inlineReviewRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/documents/review/inline');
       const reply = { send: vi.fn() };
 
-      vi.spyOn(PIIDetector, 'scanAndEmit').mockResolvedValue({ hasPII: false, detectedTypes: [], sanitizedText: 'test' });
-      vi.spyOn(CrisisDetector, 'detectAndEmit').mockResolvedValue({ isCrisis: false, matchedPhrases: [] });
+      vi.spyOn(PIIDetector, 'scanAndEmit').mockResolvedValue({ hasPII: false, detectedTypes: [], sanitizedText: 'test', action: 'stripped' as const });
+      vi.spyOn(CrisisDetector, 'detectAndEmit').mockResolvedValue({ isCrisis: false, matchedPhrases: [], confidence: 0, tier: 0 as const });
       vi.spyOn(InlineDiffHandler, 'review').mockResolvedValue({ sessionId: 's1', overall: 60, mode: 'strict', categories: [], diffs: [] } as any);
 
       await handler({ body: { text: 'a'.repeat(50), scoringMode: 'strict' } }, reply);
@@ -136,12 +147,12 @@ describe('inlineReviewRoute', () => {
 
     it('returns 500 when review fails', async () => {
       const mockFastify = createMockFastify();
-      await inlineReviewRoute(mockFastify as unknown as Parameters<typeof inlineReviewRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/documents/review/inline')?.[2];
+      await inlineReviewRoute(mockFastify as unknown as Parameters<typeof inlineReviewRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/documents/review/inline');
       const reply = { code: vi.fn().mockReturnThis(), send: vi.fn() };
 
-      vi.spyOn(PIIDetector, 'scanAndEmit').mockResolvedValue({ hasPII: false, detectedTypes: [], sanitizedText: 'test' });
-      vi.spyOn(CrisisDetector, 'detectAndEmit').mockResolvedValue({ isCrisis: false, matchedPhrases: [] });
+      vi.spyOn(PIIDetector, 'scanAndEmit').mockResolvedValue({ hasPII: false, detectedTypes: [], sanitizedText: 'test', action: 'stripped' as const });
+      vi.spyOn(CrisisDetector, 'detectAndEmit').mockResolvedValue({ isCrisis: false, matchedPhrases: [], confidence: 0, tier: 0 as const });
       vi.spyOn(InlineDiffHandler, 'review').mockRejectedValue(new Error('API error'));
 
       await handler({ body: { text: 'a'.repeat(50) } }, reply);

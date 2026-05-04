@@ -53,8 +53,11 @@ export const benefitsRoute: FastifyPluginAsync = async (fastify) => {
   // GET /api/benefits — search and filter benefits
   fastify.get<{ Querystring: z.infer<typeof SearchQuerySchema>; Reply: readonly BenefitV2[] }>(
     '/benefits',
+    {},
     async (request, reply) => {
-      const parsed = SearchQuerySchema.parse(request.query);
+      const result = SearchQuerySchema.safeParse(request.query);
+      if (!result.success) return reply.code(400).send({ error: 'Invalid request', details: result.error.issues } as unknown as readonly BenefitV2[]);
+      const parsed = result.data;
       const results = benefitsService.search(
         parsed.q,
         parsed.category as BenefitV2['category'] | 'all',
@@ -67,6 +70,7 @@ export const benefitsRoute: FastifyPluginAsync = async (fastify) => {
   // GET /api/benefits/hidden-gems — return curated lesser-known benefits
   fastify.get<{ Reply: readonly BenefitV2[] }>(
     '/benefits/hidden-gems',
+    {},
     async (_request, reply) => {
       return reply.send(benefitsService.getHiddenGems());
     },
@@ -75,6 +79,7 @@ export const benefitsRoute: FastifyPluginAsync = async (fastify) => {
   // GET /api/benefits/:id — single benefit by ID
   fastify.get<{ Params: { id: string }; Reply: BenefitV2 }>(
     '/benefits/:id',
+    {},
     async (request, reply) => {
       const benefit = benefitsService.getById(request.params.id);
       if (!benefit) {
@@ -102,7 +107,9 @@ export const benefitsRoute: FastifyPluginAsync = async (fastify) => {
       },
     },
     async (request, reply) => {
-      const answers = EligibilitySchema.parse(request.body) as EligibilityAnswers;
+      const _result = EligibilitySchema.safeParse(request.body);
+      if (!_result.success) return reply.code(400).send({ error: 'Invalid request', details: _result.error.issues } as unknown as EligibilityResult);
+      const answers = _result.data as EligibilityAnswers;
       const result = eligibilityChecker.check(answers);
       return reply.send(result);
     },

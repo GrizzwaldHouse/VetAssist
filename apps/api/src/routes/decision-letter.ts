@@ -17,7 +17,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SKILLS_BASE_PATH = path.resolve(__dirname, '../../../../claude/skills');
 
 const DecisionLetterBodySchema = z.object({
-  documentText: z.string().min(50).max(50_000),
+  documentText: z.string().min(10).max(50_000),
   sessionId:    z.string().optional(),
 });
 
@@ -25,7 +25,7 @@ export const decisionLetterRoute: FastifyPluginAsync = async (fastify) => {
   const provider     = createProvider();
   const promptLoader = createPromptLoader(SKILLS_BASE_PATH);
 
-  fastify.post('/documents/decision-letter', async (request, reply) => {
+  fastify.post('/documents/decision-letter', {}, async (request, reply) => {
     const parsed = DecisionLetterBodySchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({ message: 'Invalid request', errors: parsed.error.issues });
@@ -57,6 +57,6 @@ export const decisionLetterRoute: FastifyPluginAsync = async (fastify) => {
 
     const analysis = await DecisionLetterHandler.analyze(sid, safeText, { provider, promptLoader });
 
-    return reply.status(200).send({ ...analysis, piiRedacted: piiResult.hasPII });
+    return reply.send({ ...analysis, piiRedacted: piiResult.hasPII });
   });
 };

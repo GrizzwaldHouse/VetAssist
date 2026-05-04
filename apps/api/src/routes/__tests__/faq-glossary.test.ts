@@ -23,6 +23,17 @@ function createMockFastify() {
   };
 }
 
+function getHandler(
+  mock: ReturnType<typeof createMockFastify>,
+  method: 'get' | 'post',
+  url: string
+): (req: unknown, reply: unknown) => unknown {
+  const calls = (mock[method] as ReturnType<typeof vi.fn>).mock.calls as Array<[string, unknown, unknown]>;
+  const match = calls.find((c) => c[0] === url);
+  if (!match) throw new Error(`No handler registered for ${method.toUpperCase()} ${url}`);
+  return match[2] as (req: unknown, reply: unknown) => unknown;
+}
+
 describe('faqGlossaryRoute', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -35,8 +46,8 @@ describe('faqGlossaryRoute', () => {
   describe('GET /faq', () => {
     it('returns paginated FAQs with defaults', async () => {
       const mockFastify = createMockFastify();
-      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/faq')?.[2];
+      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/faq');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler({ query: {} }, reply);
@@ -53,8 +64,8 @@ describe('faqGlossaryRoute', () => {
 
     it('filters FAQs by category', async () => {
       const mockFastify = createMockFastify();
-      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/faq')?.[2];
+      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/faq');
       const reply = { send: vi.fn() };
 
       handler({ query: { category: 'claims' } }, reply);
@@ -67,8 +78,8 @@ describe('faqGlossaryRoute', () => {
 
     it('searches FAQs by keyword', async () => {
       const mockFastify = createMockFastify();
-      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/faq')?.[2];
+      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/faq');
       const reply = { send: vi.fn() };
 
       handler({ query: { q: 'rating' } }, reply);
@@ -84,8 +95,8 @@ describe('faqGlossaryRoute', () => {
 
     it('supports pagination with page and pageSize', async () => {
       const mockFastify = createMockFastify();
-      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/faq')?.[2];
+      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/faq');
       const reply = { send: vi.fn() };
 
       handler({ query: { page: 2, pageSize: 5 } }, reply);
@@ -98,8 +109,8 @@ describe('faqGlossaryRoute', () => {
 
     it('rejects invalid category', async () => {
       const mockFastify = createMockFastify();
-      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/faq')?.[2];
+      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/faq');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler({ query: { category: 'invalid' } }, reply);
@@ -109,8 +120,8 @@ describe('faqGlossaryRoute', () => {
 
     it('rejects pageSize over 100', async () => {
       const mockFastify = createMockFastify();
-      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/faq')?.[2];
+      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/faq');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler({ query: { pageSize: 101 } }, reply);
@@ -126,8 +137,8 @@ describe('faqGlossaryRoute', () => {
   describe('GET /faq/search', () => {
     it('returns matching FAQs for search term', async () => {
       const mockFastify = createMockFastify();
-      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/faq/search')?.[2];
+      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/faq/search');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler({ query: { q: 'ITF' } }, reply);
@@ -138,9 +149,9 @@ describe('faqGlossaryRoute', () => {
 
     it('returns empty array for no matches', async () => {
       const mockFastify = createMockFastify();
-      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/faq/search')?.[2];
-      const reply = { send: vi.fn() };
+      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/faq/search');
+      const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler({ query: { q: 'xyznonexistent' } }, reply);
 
@@ -149,8 +160,8 @@ describe('faqGlossaryRoute', () => {
 
     it('rejects empty search query', async () => {
       const mockFastify = createMockFastify();
-      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/faq/search')?.[2];
+      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/faq/search');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler({ query: { q: '' } }, reply);
@@ -160,8 +171,8 @@ describe('faqGlossaryRoute', () => {
 
     it('rejects query over 200 characters', async () => {
       const mockFastify = createMockFastify();
-      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/faq/search')?.[2];
+      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/faq/search');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler({ query: { q: 'a'.repeat(201) } }, reply);
@@ -177,8 +188,8 @@ describe('faqGlossaryRoute', () => {
   describe('POST /faq/:id/upvote', () => {
     it('returns upvote count for existing FAQ', async () => {
       const mockFastify = createMockFastify();
-      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/faq/:id/upvote')?.[2];
+      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/faq/:id/upvote');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler({ params: { id: 'faq-001' } }, reply);
@@ -188,8 +199,8 @@ describe('faqGlossaryRoute', () => {
 
     it('returns 404 for non-existent FAQ', async () => {
       const mockFastify = createMockFastify();
-      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/faq/:id/upvote')?.[2];
+      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'post', '/faq/:id/upvote');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler({ params: { id: 'nonexistent' } }, reply);
@@ -206,8 +217,8 @@ describe('faqGlossaryRoute', () => {
   describe('GET /glossary', () => {
     it('returns all glossary terms sorted alphabetically', async () => {
       const mockFastify = createMockFastify();
-      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/glossary')?.[2];
+      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/glossary');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler({}, reply);
@@ -231,8 +242,8 @@ describe('faqGlossaryRoute', () => {
   describe('GET /glossary/search', () => {
     it('returns matching terms for search query', async () => {
       const mockFastify = createMockFastify();
-      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/glossary/search')?.[2];
+      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/glossary/search');
       const reply = { send: vi.fn() };
 
       handler({ query: { q: 'disability' } }, reply);
@@ -242,8 +253,8 @@ describe('faqGlossaryRoute', () => {
 
     it('searches term, definition, and acronym', async () => {
       const mockFastify = createMockFastify();
-      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/glossary/search')?.[2];
+      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/glossary/search');
       const reply = { send: vi.fn() };
 
       handler({ query: { q: 'PTSD' } }, reply);
@@ -260,8 +271,8 @@ describe('faqGlossaryRoute', () => {
 
     it('rejects empty search query', async () => {
       const mockFastify = createMockFastify();
-      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/glossary/search')?.[2];
+      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/glossary/search');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler({ query: { q: '' } }, reply);
@@ -277,8 +288,8 @@ describe('faqGlossaryRoute', () => {
   describe('GET /glossary/letter/:letter', () => {
     it('returns terms starting with specified letter', async () => {
       const mockFastify = createMockFastify();
-      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/glossary/letter/:letter')?.[2];
+      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/glossary/letter/:letter');
       const reply = { send: vi.fn() };
 
       handler({ params: { letter: 'd' } }, reply);
@@ -291,8 +302,8 @@ describe('faqGlossaryRoute', () => {
 
     it('rejects invalid letter parameter', async () => {
       const mockFastify = createMockFastify();
-      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/glossary/letter/:letter')?.[2];
+      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/glossary/letter/:letter');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler({ params: { letter: '12' } }, reply);
@@ -302,8 +313,8 @@ describe('faqGlossaryRoute', () => {
 
     it('rejects non-alphabetic letter', async () => {
       const mockFastify = createMockFastify();
-      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/glossary/letter/:letter')?.[2];
+      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/glossary/letter/:letter');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler({ params: { letter: '@' } }, reply);
@@ -319,8 +330,8 @@ describe('faqGlossaryRoute', () => {
   describe('GET /workarounds', () => {
     it('returns all workaround guides', async () => {
       const mockFastify = createMockFastify();
-      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/workarounds')?.[2];
+      await faqGlossaryRoute(mockFastify as unknown as Parameters<typeof faqGlossaryRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/workarounds');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler({}, reply);

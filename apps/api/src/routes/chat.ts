@@ -15,7 +15,7 @@ import { retrievalPipeline } from '@vetassist/knowledge';
 
 const ChatRequestSchema = z.object({
   text: z.string().min(1).max(4000),
-  sessionId: z.string().uuid().optional(),
+  sessionId: z.string().optional(),
   userId: z.string().optional(),
 });
 

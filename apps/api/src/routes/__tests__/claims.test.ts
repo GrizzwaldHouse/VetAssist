@@ -30,6 +30,17 @@ function createMockFastify() {
   };
 }
 
+function getHandler(
+  mock: ReturnType<typeof createMockFastify>,
+  method: 'get' | 'post' | 'patch' | 'delete',
+  url: string
+): (req: unknown, reply: unknown) => unknown {
+  const calls = (mock[method] as ReturnType<typeof vi.fn>).mock.calls as Array<[string, unknown, unknown]>;
+  const match = calls.find((c) => c[0] === url);
+  if (!match) throw new Error(`No handler registered for ${method.toUpperCase()} ${url}`);
+  return match[2] as (req: unknown, reply: unknown) => unknown;
+}
+
 describe('claimsRoute', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -43,7 +54,7 @@ describe('claimsRoute', () => {
     it('returns all claims', async () => {
       const mockFastify = createMockFastify();
       await claimsRoute(mockFastify as unknown as Parameters<typeof claimsRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/claims')?.[2];
+      const handler = getHandler(mockFastify, 'get', '/claims');
       const reply = { send: vi.fn() };
       const mockClaims = [
         { id: 'c1', condition: 'PTSD', status: 'submitted' },
@@ -65,7 +76,7 @@ describe('claimsRoute', () => {
     it('creates claim with valid input', async () => {
       const mockFastify = createMockFastify();
       await claimsRoute(mockFastify as unknown as Parameters<typeof claimsRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/claims')?.[2];
+      const handler = getHandler(mockFastify, 'post', '/claims');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
       const mockClaim = { id: 'c1', condition: 'PTSD', status: 'not_started', events: [], deadlines: [], checklist: [] };
       vi.spyOn(ClaimsStore.prototype, 'createClaim').mockReturnValue(mockClaim as any);
@@ -79,7 +90,7 @@ describe('claimsRoute', () => {
     it('rejects empty condition', async () => {
       const mockFastify = createMockFastify();
       await claimsRoute(mockFastify as unknown as Parameters<typeof claimsRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/claims')?.[2];
+      const handler = getHandler(mockFastify, 'post', '/claims');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler({ body: { condition: '' } }, reply);
@@ -90,7 +101,7 @@ describe('claimsRoute', () => {
     it('rejects condition exceeding 500 characters', async () => {
       const mockFastify = createMockFastify();
       await claimsRoute(mockFastify as unknown as Parameters<typeof claimsRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/claims')?.[2];
+      const handler = getHandler(mockFastify, 'post', '/claims');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler({ body: { condition: 'a'.repeat(501) } }, reply);
@@ -101,7 +112,7 @@ describe('claimsRoute', () => {
     it('accepts optional notes up to 5000 characters', async () => {
       const mockFastify = createMockFastify();
       await claimsRoute(mockFastify as unknown as Parameters<typeof claimsRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/claims')?.[2];
+      const handler = getHandler(mockFastify, 'post', '/claims');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
       const mockClaim = { id: 'c1', condition: 'PTSD', status: 'not_started', events: [], deadlines: [], checklist: [] };
       vi.spyOn(ClaimsStore.prototype, 'createClaim').mockReturnValue(mockClaim as any);
@@ -114,7 +125,7 @@ describe('claimsRoute', () => {
     it('rejects notes exceeding 5000 characters', async () => {
       const mockFastify = createMockFastify();
       await claimsRoute(mockFastify as unknown as Parameters<typeof claimsRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/claims')?.[2];
+      const handler = getHandler(mockFastify, 'post', '/claims');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler({ body: { condition: 'PTSD', notes: 'a'.repeat(5001) } }, reply);
@@ -131,7 +142,7 @@ describe('claimsRoute', () => {
     it('returns claim by ID', async () => {
       const mockFastify = createMockFastify();
       await claimsRoute(mockFastify as unknown as Parameters<typeof claimsRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/claims/:id')?.[2];
+      const handler = getHandler(mockFastify, 'get', '/claims/:id');
       const reply = { send: vi.fn() };
       const mockClaim = { id: 'c1', condition: 'PTSD', status: 'submitted' };
       vi.spyOn(ClaimsStore.prototype, 'getClaim').mockReturnValue(mockClaim as any);
@@ -144,9 +155,9 @@ describe('claimsRoute', () => {
     it('returns 404 when claim not found', async () => {
       const mockFastify = createMockFastify();
       await claimsRoute(mockFastify as unknown as Parameters<typeof claimsRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/claims/:id')?.[2];
+      const handler = getHandler(mockFastify, 'get', '/claims/:id');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
-      vi.spyOn(ClaimsStore.prototype, 'getClaim').mockReturnValue(undefined);
+      vi.spyOn(ClaimsStore.prototype, 'getClaim').mockReturnValue(null as any);
 
       handler({ params: { id: 'nonexistent' } }, reply);
 
@@ -163,7 +174,7 @@ describe('claimsRoute', () => {
     it('updates claim status', async () => {
       const mockFastify = createMockFastify();
       await claimsRoute(mockFastify as unknown as Parameters<typeof claimsRoute>[0]);
-      const handler = mockFastify.patch.mock.calls.find((c) => c[0] === '/claims/:id')?.[2];
+      const handler = getHandler(mockFastify, 'patch', '/claims/:id');
       const reply = { send: vi.fn() };
       const mockClaim = { id: 'c1', condition: 'PTSD', status: 'submitted' };
       vi.spyOn(ClaimsStore.prototype, 'updateClaim').mockReturnValue(mockClaim as any);
@@ -176,7 +187,7 @@ describe('claimsRoute', () => {
     it('updates disability rating', async () => {
       const mockFastify = createMockFastify();
       await claimsRoute(mockFastify as unknown as Parameters<typeof claimsRoute>[0]);
-      const handler = mockFastify.patch.mock.calls.find((c) => c[0] === '/claims/:id')?.[2];
+      const handler = getHandler(mockFastify, 'patch', '/claims/:id');
       const reply = { send: vi.fn() };
       const mockClaim = { id: 'c1', condition: 'PTSD', disabilityRating: 70 };
       vi.spyOn(ClaimsStore.prototype, 'updateClaim').mockReturnValue(mockClaim as any);
@@ -189,7 +200,7 @@ describe('claimsRoute', () => {
     it('accepts null disabilityRating', async () => {
       const mockFastify = createMockFastify();
       await claimsRoute(mockFastify as unknown as Parameters<typeof claimsRoute>[0]);
-      const handler = mockFastify.patch.mock.calls.find((c) => c[0] === '/claims/:id')?.[2];
+      const handler = getHandler(mockFastify, 'patch', '/claims/:id');
       const reply = { send: vi.fn() };
       const mockClaim = { id: 'c1', condition: 'PTSD', disabilityRating: null };
       vi.spyOn(ClaimsStore.prototype, 'updateClaim').mockReturnValue(mockClaim as any);
@@ -202,7 +213,7 @@ describe('claimsRoute', () => {
     it('rejects disability rating out of range', async () => {
       const mockFastify = createMockFastify();
       await claimsRoute(mockFastify as unknown as Parameters<typeof claimsRoute>[0]);
-      const handler = mockFastify.patch.mock.calls.find((c) => c[0] === '/claims/:id')?.[2];
+      const handler = getHandler(mockFastify, 'patch', '/claims/:id');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler({ params: { id: 'c1' }, body: { disabilityRating: 150 } }, reply);
@@ -213,9 +224,9 @@ describe('claimsRoute', () => {
     it('returns 404 when claim not found', async () => {
       const mockFastify = createMockFastify();
       await claimsRoute(mockFastify as unknown as Parameters<typeof claimsRoute>[0]);
-      const handler = mockFastify.patch.mock.calls.find((c) => c[0] === '/claims/:id')?.[2];
+      const handler = getHandler(mockFastify, 'patch', '/claims/:id');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
-      vi.spyOn(ClaimsStore.prototype, 'updateClaim').mockReturnValue(undefined);
+      vi.spyOn(ClaimsStore.prototype, 'updateClaim').mockReturnValue(null as any);
 
       handler({ params: { id: 'nonexistent' }, body: { status: 'submitted' } }, reply);
 
@@ -232,7 +243,7 @@ describe('claimsRoute', () => {
     it('deletes claim and returns 204', async () => {
       const mockFastify = createMockFastify();
       await claimsRoute(mockFastify as unknown as Parameters<typeof claimsRoute>[0]);
-      const handler = mockFastify.delete.mock.calls.find((c) => c[0] === '/claims/:id')?.[2];
+      const handler = getHandler(mockFastify, 'delete', '/claims/:id');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
       vi.spyOn(ClaimsStore.prototype, 'deleteClaim').mockReturnValue(true);
 
@@ -244,7 +255,7 @@ describe('claimsRoute', () => {
     it('returns 404 when claim not found', async () => {
       const mockFastify = createMockFastify();
       await claimsRoute(mockFastify as unknown as Parameters<typeof claimsRoute>[0]);
-      const handler = mockFastify.delete.mock.calls.find((c) => c[0] === '/claims/:id')?.[2];
+      const handler = getHandler(mockFastify, 'delete', '/claims/:id');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
       vi.spyOn(ClaimsStore.prototype, 'deleteClaim').mockReturnValue(false);
 
@@ -263,7 +274,7 @@ describe('claimsRoute', () => {
     it('adds event to claim', async () => {
       const mockFastify = createMockFastify();
       await claimsRoute(mockFastify as unknown as Parameters<typeof claimsRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/claims/:id/events')?.[2];
+      const handler = getHandler(mockFastify, 'post', '/claims/:id/events');
       const reply = { send: vi.fn() };
       const mockClaim = { id: 'c1', events: [{ type: 'claim_created', title: 'Created' }] };
       vi.spyOn(ClaimsStore.prototype, 'addEvent').mockReturnValue(mockClaim as any);
@@ -279,7 +290,7 @@ describe('claimsRoute', () => {
     it('rejects invalid event type', async () => {
       const mockFastify = createMockFastify();
       await claimsRoute(mockFastify as unknown as Parameters<typeof claimsRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/claims/:id/events')?.[2];
+      const handler = getHandler(mockFastify, 'post', '/claims/:id/events');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler(
@@ -293,7 +304,7 @@ describe('claimsRoute', () => {
     it('rejects empty title', async () => {
       const mockFastify = createMockFastify();
       await claimsRoute(mockFastify as unknown as Parameters<typeof claimsRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/claims/:id/events')?.[2];
+      const handler = getHandler(mockFastify, 'post', '/claims/:id/events');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler(
@@ -307,7 +318,7 @@ describe('claimsRoute', () => {
     it('accepts optional occurredAt datetime', async () => {
       const mockFastify = createMockFastify();
       await claimsRoute(mockFastify as unknown as Parameters<typeof claimsRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/claims/:id/events')?.[2];
+      const handler = getHandler(mockFastify, 'post', '/claims/:id/events');
       const reply = { send: vi.fn() };
       const mockClaim = { id: 'c1', events: [] };
       vi.spyOn(ClaimsStore.prototype, 'addEvent').mockReturnValue(mockClaim as any);
@@ -332,7 +343,7 @@ describe('claimsRoute', () => {
     it('adds deadline to claim', async () => {
       const mockFastify = createMockFastify();
       await claimsRoute(mockFastify as unknown as Parameters<typeof claimsRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/claims/:id/deadlines')?.[2];
+      const handler = getHandler(mockFastify, 'post', '/claims/:id/deadlines');
       const reply = { send: vi.fn() };
       const mockClaim = { id: 'c1', deadlines: [{ type: 'c_and_p_exam', label: 'Exam', dueAt: '2026-05-01T10:00:00Z' }] };
       vi.spyOn(ClaimsStore.prototype, 'addDeadline').mockReturnValue(mockClaim as any);
@@ -351,7 +362,7 @@ describe('claimsRoute', () => {
     it('accepts optional alertDaysBefore', async () => {
       const mockFastify = createMockFastify();
       await claimsRoute(mockFastify as unknown as Parameters<typeof claimsRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/claims/:id/deadlines')?.[2];
+      const handler = getHandler(mockFastify, 'post', '/claims/:id/deadlines');
       const reply = { send: vi.fn() };
       const mockClaim = { id: 'c1', deadlines: [] };
       vi.spyOn(ClaimsStore.prototype, 'addDeadline').mockReturnValue(mockClaim as any);
@@ -370,7 +381,7 @@ describe('claimsRoute', () => {
     it('rejects invalid deadline type', async () => {
       const mockFastify = createMockFastify();
       await claimsRoute(mockFastify as unknown as Parameters<typeof claimsRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/claims/:id/deadlines')?.[2];
+      const handler = getHandler(mockFastify, 'post', '/claims/:id/deadlines');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler(
@@ -384,7 +395,7 @@ describe('claimsRoute', () => {
     it('rejects missing dueAt', async () => {
       const mockFastify = createMockFastify();
       await claimsRoute(mockFastify as unknown as Parameters<typeof claimsRoute>[0]);
-      const handler = mockFastify.post.mock.calls.find((c) => c[0] === '/claims/:id/deadlines')?.[2];
+      const handler = getHandler(mockFastify, 'post', '/claims/:id/deadlines');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler(
@@ -404,7 +415,7 @@ describe('claimsRoute', () => {
     it('toggles checklist item to completed', async () => {
       const mockFastify = createMockFastify();
       await claimsRoute(mockFastify as unknown as Parameters<typeof claimsRoute>[0]);
-      const handler = mockFastify.patch.mock.calls.find((c) => c[0] === '/claims/:id/checklist')?.[2];
+      const handler = getHandler(mockFastify, 'patch', '/claims/:id/checklist');
       const reply = { send: vi.fn() };
       const mockClaim = { id: 'c1', checklist: [{ id: 'item1', label: 'Gather evidence', completed: true }] };
       vi.spyOn(ClaimsStore.prototype, 'toggleChecklistItem').mockReturnValue(mockClaim as any);
@@ -417,7 +428,7 @@ describe('claimsRoute', () => {
     it('toggles checklist item to incomplete', async () => {
       const mockFastify = createMockFastify();
       await claimsRoute(mockFastify as unknown as Parameters<typeof claimsRoute>[0]);
-      const handler = mockFastify.patch.mock.calls.find((c) => c[0] === '/claims/:id/checklist')?.[2];
+      const handler = getHandler(mockFastify, 'patch', '/claims/:id/checklist');
       const reply = { send: vi.fn() };
       const mockClaim = { id: 'c1', checklist: [{ id: 'item1', label: 'Gather evidence', completed: false }] };
       vi.spyOn(ClaimsStore.prototype, 'toggleChecklistItem').mockReturnValue(mockClaim as any);
@@ -430,7 +441,7 @@ describe('claimsRoute', () => {
     it('rejects empty itemId', async () => {
       const mockFastify = createMockFastify();
       await claimsRoute(mockFastify as unknown as Parameters<typeof claimsRoute>[0]);
-      const handler = mockFastify.patch.mock.calls.find((c) => c[0] === '/claims/:id/checklist')?.[2];
+      const handler = getHandler(mockFastify, 'patch', '/claims/:id/checklist');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler({ params: { id: 'c1' }, body: { itemId: '', completed: true } }, reply);
@@ -441,9 +452,9 @@ describe('claimsRoute', () => {
     it('returns 404 when claim not found', async () => {
       const mockFastify = createMockFastify();
       await claimsRoute(mockFastify as unknown as Parameters<typeof claimsRoute>[0]);
-      const handler = mockFastify.patch.mock.calls.find((c) => c[0] === '/claims/:id/checklist')?.[2];
+      const handler = getHandler(mockFastify, 'patch', '/claims/:id/checklist');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
-      vi.spyOn(ClaimsStore.prototype, 'toggleChecklistItem').mockReturnValue(undefined);
+      vi.spyOn(ClaimsStore.prototype, 'toggleChecklistItem').mockReturnValue(null as any);
 
       handler({ params: { id: 'nonexistent' }, body: { itemId: 'item1', completed: true } }, reply);
 

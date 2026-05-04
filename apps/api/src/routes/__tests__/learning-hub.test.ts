@@ -16,6 +16,17 @@ function createMockFastify() {
   };
 }
 
+function getHandler(
+  mock: ReturnType<typeof createMockFastify>,
+  method: 'get',
+  url: string
+): (req: unknown, reply: unknown) => unknown {
+  const calls = (mock[method] as ReturnType<typeof vi.fn>).mock.calls as Array<[string, unknown, unknown]>;
+  const match = calls.find((c) => c[0] === url);
+  if (!match) throw new Error(`No handler registered for ${method.toUpperCase()} ${url}`);
+  return match[2] as (req: unknown, reply: unknown) => unknown;
+}
+
 describe('learningHubRoute', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -24,8 +35,8 @@ describe('learningHubRoute', () => {
   describe('GET /learning', () => {
     it('returns all learning resources', async () => {
       const mockFastify = createMockFastify();
-      await learningHubRoute(mockFastify as unknown as Parameters<typeof learningHubRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/learning')?.[2];
+      await learningHubRoute(mockFastify as unknown as Parameters<typeof learningHubRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/learning');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler({ query: {} }, reply);
@@ -40,8 +51,8 @@ describe('learningHubRoute', () => {
 
     it('filters by topic', async () => {
       const mockFastify = createMockFastify();
-      await learningHubRoute(mockFastify as unknown as Parameters<typeof learningHubRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/learning')?.[2];
+      await learningHubRoute(mockFastify as unknown as Parameters<typeof learningHubRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/learning');
       const reply = { send: vi.fn() };
 
       handler({ query: { topic: 'disability_compensation' } }, reply);
@@ -54,8 +65,8 @@ describe('learningHubRoute', () => {
 
     it('filters by type', async () => {
       const mockFastify = createMockFastify();
-      await learningHubRoute(mockFastify as unknown as Parameters<typeof learningHubRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/learning')?.[2];
+      await learningHubRoute(mockFastify as unknown as Parameters<typeof learningHubRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/learning');
       const reply = { send: vi.fn() };
 
       handler({ query: { type: 'video' } }, reply);
@@ -68,8 +79,8 @@ describe('learningHubRoute', () => {
 
     it('filters by difficulty level', async () => {
       const mockFastify = createMockFastify();
-      await learningHubRoute(mockFastify as unknown as Parameters<typeof learningHubRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/learning')?.[2];
+      await learningHubRoute(mockFastify as unknown as Parameters<typeof learningHubRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/learning');
       const reply = { send: vi.fn() };
 
       handler({ query: { difficulty: 'beginner' } }, reply);
@@ -82,8 +93,8 @@ describe('learningHubRoute', () => {
 
     it('searches by keyword in title, description, and keyTakeaways', async () => {
       const mockFastify = createMockFastify();
-      await learningHubRoute(mockFastify as unknown as Parameters<typeof learningHubRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/learning')?.[2];
+      await learningHubRoute(mockFastify as unknown as Parameters<typeof learningHubRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/learning');
       const reply = { send: vi.fn() };
 
       handler({ query: { q: 'disability' } }, reply);
@@ -100,8 +111,8 @@ describe('learningHubRoute', () => {
 
     it('rejects invalid topic', async () => {
       const mockFastify = createMockFastify();
-      await learningHubRoute(mockFastify as unknown as Parameters<typeof learningHubRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/learning')?.[2];
+      await learningHubRoute(mockFastify as unknown as Parameters<typeof learningHubRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/learning');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler({ query: { topic: 'invalid' } }, reply);
@@ -111,8 +122,8 @@ describe('learningHubRoute', () => {
 
     it('rejects invalid type', async () => {
       const mockFastify = createMockFastify();
-      await learningHubRoute(mockFastify as unknown as Parameters<typeof learningHubRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/learning')?.[2];
+      await learningHubRoute(mockFastify as unknown as Parameters<typeof learningHubRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/learning');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler({ query: { type: 'podcast' } }, reply);
@@ -122,8 +133,8 @@ describe('learningHubRoute', () => {
 
     it('rejects query over 200 characters', async () => {
       const mockFastify = createMockFastify();
-      await learningHubRoute(mockFastify as unknown as Parameters<typeof learningHubRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/learning')?.[2];
+      await learningHubRoute(mockFastify as unknown as Parameters<typeof learningHubRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/learning');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler({ query: { q: 'a'.repeat(201) } }, reply);
@@ -135,8 +146,8 @@ describe('learningHubRoute', () => {
   describe('GET /learning/:id', () => {
     it('returns resource by ID', async () => {
       const mockFastify = createMockFastify();
-      await learningHubRoute(mockFastify as unknown as Parameters<typeof learningHubRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/learning/:id')?.[2];
+      await learningHubRoute(mockFastify as unknown as Parameters<typeof learningHubRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/learning/:id');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler({ params: { id: 'lr-001' } }, reply);
@@ -148,8 +159,8 @@ describe('learningHubRoute', () => {
 
     it('returns 404 for non-existent resource', async () => {
       const mockFastify = createMockFastify();
-      await learningHubRoute(mockFastify as unknown as Parameters<typeof learningHubRoute>[0]);
-      const handler = mockFastify.get.mock.calls.find((c) => c[0] === '/learning/:id')?.[2];
+      await learningHubRoute(mockFastify as unknown as Parameters<typeof learningHubRoute>[0], {} as any);
+      const handler = getHandler(mockFastify, 'get', '/learning/:id');
       const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
       handler({ params: { id: 'nonexistent' } }, reply);

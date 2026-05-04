@@ -31,9 +31,9 @@ const SCORING_MODES = ['encouraging', 'strict'] as const;
 
 const GenerateDocumentSchema = z.object({
   docType: z.enum(WIZARD_DOC_TYPES),
-  answers: z.record(z.string(), z.string()),
+  answers: z.record(z.string(), z.string()).refine(obj => Object.keys(obj).length > 0, { message: 'answers must not be empty' }),
   scoringMode: z.enum(SCORING_MODES).default('encouraging'),
-  sessionId: z.string().uuid().optional(),
+  sessionId: z.string().optional(),
 });
 
 type GenerateDocumentBody = z.infer<typeof GenerateDocumentSchema>;
@@ -127,7 +127,7 @@ export const generateRoute: FastifyPluginAsync = async (fastify) => {
       } catch (err: unknown) {
         // Log error type only — never log answers (may contain PII not caught by regex)
         const errorType = err instanceof Error ? err.constructor.name : 'UnknownError';
-        fastify.log.error({ errorType }, '[documents/generate] AI provider error');
+        fastify.log?.error({ errorType }, '[documents/generate] AI provider error');
         return reply.code(500).send({
           error: 'Document generation failed. Please try again.',
         } as unknown as GeneratedDocument);

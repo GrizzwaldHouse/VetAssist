@@ -502,7 +502,7 @@ const SEEDED_WORKAROUNDS: readonly VAWorkaround[] = [
 export const faqGlossaryRoute: FastifyPluginAsync = async (fastify) => {
 
   // GET /api/faq — paginated list with optional category and keyword filters
-  fastify.get('/faq', async (request, reply) => {
+  fastify.get('/faq', {}, async (request, reply) => {
     const parsed = FaqListQuerySchema.safeParse(request.query);
     if (!parsed.success) {
       return reply.status(400).send({ message: 'Invalid query parameters', errors: parsed.error.issues });
@@ -529,11 +529,11 @@ export const faqGlossaryRoute: FastifyPluginAsync = async (fastify) => {
     const paginated = results.slice(start, start + pageSize);
 
     const response: FAQListResponse = { entries: paginated, total, page, pageSize };
-    return reply.status(200).send(response);
+    return reply.send(response);
   });
 
   // GET /api/faq/search — full-text search, returns up to 20 results
-  fastify.get('/faq/search', async (request, reply) => {
+  fastify.get('/faq/search', {}, async (request, reply) => {
     const parsed = SearchQuerySchema.safeParse(request.query);
     if (!parsed.success) {
       return reply.status(400).send({ message: 'Query parameter "q" is required', errors: parsed.error.issues });
@@ -549,25 +549,25 @@ export const faqGlossaryRoute: FastifyPluginAsync = async (fastify) => {
   });
 
   // POST /api/faq/:id/upvote — increment upvote (in-memory for MVP)
-  fastify.post('/faq/:id/upvote', async (request, reply) => {
+  fastify.post('/faq/:id/upvote', {}, async (request, reply) => {
     const { id } = request.params as { id: string };
     const entry = SEEDED_FAQ.find(e => e.id === id);
     if (!entry) {
       return reply.status(404).send({ message: 'FAQ entry not found' });
     }
     // Upvotes are ephemeral in the MVP in-memory store — persist via Prisma in a future sprint
-    return reply.status(200).send({ id, upvotes: entry.upvotes + 1 });
+    return reply.send({ id, upvotes: entry.upvotes + 1 });
   });
 
   // GET /api/glossary — all terms sorted alphabetically
-  fastify.get('/glossary', async (_request, reply) => {
+  fastify.get('/glossary', {}, async (_request, reply) => {
     const sorted = [...SEEDED_GLOSSARY].sort((a, b) => a.term.localeCompare(b.term));
     const response: GlossaryListResponse = { terms: sorted, total: sorted.length };
-    return reply.status(200).send(response);
+    return reply.send(response);
   });
 
   // GET /api/glossary/search — full-text search across term, definition, acronym
-  fastify.get('/glossary/search', async (request, reply) => {
+  fastify.get('/glossary/search', {}, async (request, reply) => {
     const parsed = SearchQuerySchema.safeParse(request.query);
     if (!parsed.success) {
       return reply.status(400).send({ message: 'Query parameter "q" is required', errors: parsed.error.issues });
@@ -580,11 +580,11 @@ export const faqGlossaryRoute: FastifyPluginAsync = async (fastify) => {
       g.acronym?.toLowerCase().includes(term),
     );
 
-    return reply.status(200).send(results);
+    return reply.send(results);
   });
 
   // GET /api/glossary/letter/:letter — terms starting with a given letter
-  fastify.get('/glossary/letter/:letter', async (request, reply) => {
+  fastify.get('/glossary/letter/:letter', {}, async (request, reply) => {
     const parsed = LetterParamSchema.safeParse(request.params);
     if (!parsed.success) {
       return reply.status(400).send({ message: 'Parameter must be a single letter A–Z' });
@@ -595,11 +595,11 @@ export const faqGlossaryRoute: FastifyPluginAsync = async (fastify) => {
       .filter(g => g.term.toUpperCase().startsWith(letter))
       .sort((a, b) => a.term.localeCompare(b.term));
 
-    return reply.status(200).send(results);
+    return reply.send(results);
   });
 
   // GET /api/workarounds — all VA website workaround guides
-  fastify.get('/workarounds', async (_request, reply) => {
-    return reply.status(200).send(SEEDED_WORKAROUNDS);
+  fastify.get('/workarounds', {}, async (_request, reply) => {
+    return reply.send(SEEDED_WORKAROUNDS);
   });
 };

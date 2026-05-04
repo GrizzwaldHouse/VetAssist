@@ -103,7 +103,7 @@ export const inlineReviewRoute: FastifyPluginAsync = async (fastify) => {
         return reply.send(result);
       } catch (err: unknown) {
         const errorType = err instanceof Error ? err.constructor.name : 'UnknownError';
-        fastify.log.error({ errorType }, '[documents/review/inline] AI provider error');
+        fastify.log?.error({ errorType }, '[documents/review/inline] AI provider error');
         return reply.code(500).send({
           error: 'Inline review failed. Please try again.',
         } as unknown as InlineReviewResult);

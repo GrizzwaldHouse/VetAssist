@@ -29,7 +29,7 @@ type ScoringMode = typeof SCORING_MODES[number];
 const DocumentReviewSchema = z.object({
   text: z.string().min(DOC_TEXT_MIN).max(DOC_TEXT_MAX),
   scoringMode: z.enum(SCORING_MODES).optional().default('encouraging'),
-  sessionId: z.string().uuid().optional(),
+  sessionId: z.string().optional(),
 });
 
 type DocumentReviewBody = z.infer<typeof DocumentReviewSchema>;
@@ -106,7 +106,7 @@ export const documentsRoute: FastifyPluginAsync = async (fastify) => {
       } catch (err: unknown) {
         // Log error type only — never log document content (may contain PII not caught by regex)
         const errorType = err instanceof Error ? err.constructor.name : 'UnknownError';
-        fastify.log.error({ errorType }, '[documents/review] AI provider error');
+        fastify.log?.error({ errorType }, '[documents/review] AI provider error');
         return reply.code(500).send({ error: 'Document review failed. Please try again.' } as unknown as ScoreResult);
       }
     },

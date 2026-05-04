@@ -26,7 +26,7 @@ const ShareBodySchema = z.object({
 export const sharingRoute: FastifyPluginAsync = async (fastify) => {
   const sharingService = new SharingService();
 
-  fastify.post('/documents/share', async (request, reply) => {
+  fastify.post('/documents/share', {}, async (request, reply) => {
     const parsed = ShareBodySchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({ message: 'Invalid request', errors: parsed.error.issues });
@@ -72,6 +72,6 @@ export const sharingRoute: FastifyPluginAsync = async (fastify) => {
       });
     }
 
-    return reply.status(200).send(result);
+    return reply.send(result);
   });
 };
