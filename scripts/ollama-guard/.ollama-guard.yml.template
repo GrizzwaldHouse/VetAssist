@@ -1,0 +1,53 @@
+# .ollama-guard.yml
+# Developer: Marcus Daley
+# Purpose: Per-repo config for ollama-guard local hook and CI error-checker
+# Copy this file to your repo root as .ollama-guard.yml and customize
+
+# ── Identity ──────────────────────────────────────────────────────────────────
+version: "1.0.0"
+source_url: "https://raw.githubusercontent.com/GrizzwaldHouse/VetAssist/main/scripts/ollama-guard"
+# When ollama-guard graduates to its own repo, update source_url here and run:
+#   curl -s $source_url/install.sh | bash
+
+# ── Model ─────────────────────────────────────────────────────────────────────
+model: "codellama:7b"
+fallback_model: "deepseek-coder:6.7b"
+# If model is not installed, the installer will prompt to pull it.
+# Fallback is tried if the primary model fails to load.
+
+# ── Routing thresholds ────────────────────────────────────────────────────────
+# Local hook: fixes under this line count are auto-applied after [a] confirmation
+# CI action:  fixes under this line count are auto-committed; above opens a PR
+line_diff_threshold: 5
+
+# ── Branch config ─────────────────────────────────────────────────────────────
+branch: "main"
+# CI auto-commits target this branch. PR base branch is also this value.
+
+# ── Error types to check ──────────────────────────────────────────────────────
+error_types:
+  typescript: true       # npx tsc --noEmit
+  eslint: true           # npx eslint . --max-warnings 0
+  tests: true            # npm test (or vitest)
+  import_resolution: true  # checked as part of typescript pass
+
+# ── Commit / PR format ────────────────────────────────────────────────────────
+auto_commit_pattern: "fix(ollama): %s [skip ci]"
+# %s is replaced with a one-line description of the fix.
+# [skip ci] prevents the commit from re-triggering the workflow.
+
+local_commit_pattern: "fix(ollama-local): %s"
+# Used by the pre-push hook when applying fixes locally.
+
+pr_label: "ollama-guard"
+# GitHub label applied to PRs opened by the CI action.
+# Create this label in your repo: Settings → Labels → New label
+
+# ── Hook latency budget ───────────────────────────────────────────────────────
+timeout_seconds: 30
+# If the ollama check takes longer than this, skip and allow the push.
+# Prevents flow interruption on slow machines or large repos.
+
+# ── Dry run ───────────────────────────────────────────────────────────────────
+dry_run: false
+# Set to true to see diffs without applying any fixes (useful for testing setup)
