@@ -8,9 +8,16 @@ name: Update README
 on:
   push:
     branches: [main]
+    paths:
+      # Only run when actual source or config changes — not on bot README commits or lock file bumps
+      - 'packages/**/*.ts'
+      - 'apps/**/*.ts'
+      - 'apps/**/*.tsx'
+      - '.vetassist-progress.json'
     paths-ignore:
-      # Skip infinite loops — don't re-trigger when this workflow itself commits the README
       - 'README.md'
+      - 'package-lock.json'
+      - 'docs/**'
 
 permissions:
   contents: write
