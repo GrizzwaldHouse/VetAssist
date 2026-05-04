@@ -13,6 +13,7 @@ export default defineConfig({
     include: [
       'tests/**/*.test.ts',
       'packages/*/src/**/*.test.ts',
+      'apps/*/src/**/*.test.ts',
     ],
     alias: {
       '@vetassist/shared-types': resolve('./packages/shared-types/src/index.ts'),
@@ -25,6 +26,12 @@ export default defineConfig({
       '@vetassist/compliance': resolve('./packages/compliance/src/index.ts'),
       '@vetassist/ai': resolve('./packages/ai/src/index.ts'),
       '@vetassist/security': resolve('./packages/security/src/index.ts'),
+      '@vetassist/benefits': resolve('./packages/benefits/src/index.ts'),
+      '@vetassist/community': resolve('./packages/community/src/index.ts'),
+      '@vetassist/moderation': resolve('./packages/moderation/src/index.ts'),
+      '@vetassist/claims': resolve('./packages/claims/src/index.ts'),
+      '@vetassist/auth': resolve('./packages/auth/src/index.ts'),
+      '@vetassist/consent': resolve('./packages/consent/src/index.ts'),
     },
   },
 });
