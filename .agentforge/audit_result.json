@@ -1,6 +1,6 @@
 {
   "repo": "VetAssist",
-  "auditTimestamp": "2026-05-04T07:43:11.707109+00:00",
+  "auditTimestamp": "2026-05-04T07:57:21.971746+00:00",
   "agentforgeRole": "MUSCLES",
   "integrationStatus": "STANDALONE",
   "readiness": "PARTIAL",
@@ -59,6 +59,6 @@
     ],
     "prd_violations": []
   },
-  "claudeCodeUsed": false,
-  "elapsedSeconds": 600.3
+  "claudeCodeUsed": true,
+  "elapsedSeconds": 197.9
 }
