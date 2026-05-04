@@ -418,4 +418,9 @@
     "coding_standards": "Every file needs the header comment: filename, developer (Marcus Daley), date, purpose. Single-line comments only (//). Zero hardcoded values — all colors/fonts as CSS variables from the design token file.",
     "design_token_file": "Create packages/ui-components/src/tokens.css with all CSS custom properties from this prompt's color_system. All components import from this file — never hardcode hex values in component files."
   }
-}
+} Graphify: https://github.com/safishamsi/graphify
+🔥 Firecrawl: https://firecrawl.link/jack-roberts
+🔌 Firecrawl MCP: https://docs.firecrawl.dev/mcp-server
+🤙 AwesomeMD: https://github.com/VoltAgent/awesome-...
+👀 Claude Router: https://github.com/musistudio/claude-...
+📝 NotebookLM: https://notebooklm.google.com/ "C:\ClaudeSkills" https://github.com/GrizzwaldHouse/cowork-skills.git

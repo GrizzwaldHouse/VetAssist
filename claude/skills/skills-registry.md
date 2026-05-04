@@ -49,6 +49,7 @@ These apply whenever ANY frontend code is being written. The problem with the in
 
 | Skill | Location | What It Enforces |
 |-------|----------|-----------------|
+| `impeccable` | `C:\ClaudeSkills\skills\impeccable\` | **ANTI-SLOP DESIGN COMMANDS** — 23 commands: `/impeccable audit` (slop detection), `/impeccable critique` (scored 10-dimension review), `/impeccable polish` (final design pass), `/impeccable typeset`, `/impeccable harden`. Run audit before declaring any UI page complete. |
 | `frontend-design` | `C:\ClaudeSkills\skills\frontend-design\` | **ANTI-SLOP ENFORCEMENT** — bans Inter/Roboto/Arial, bans purple gradients on white, requires a committed conceptual direction, demands one unforgettable visual choice per screen |
 | `design-system` | `C:\ClaudeSkills\skills\design-system\` | Color theory (60-30-10 rule), typography scale, WCAG contrast ratios, grid/spacing, layout composition |
 | `ui-ux-pro-max` | https://github.com/nextlevelbuilder/ui-ux-pro-max-skill | 161 reasoning rules, 67 UI styles (glassmorphism, bento grid, editorial, brutalist, etc.), 161 color palettes, 57 font pairings, 99 UX guidelines, 25 chart types |
@@ -74,6 +75,7 @@ These apply whenever ANY frontend code is being written. The problem with the in
 
 | Skill | Location | Applies To |
 |-------|----------|------------|
+| `graphify` | `C:\ClaudeSkills\skills\graphify\` | **Monorepo codebase navigation** — run `/graphify .` once on vetassist-project to build a knowledge graph; subsequent queries use the graph instead of raw file reads (71x fewer tokens on large repos). Rebuild after major structural changes. |
 | `deep-research` | `C:\ClaudeSkills\skills\deep-research\` | VA regulation research, CFR lookup, knowledge base seeding |
 | `autoresearch` | `C:\ClaudeSkills\skills\autoresearch\` | Autonomous experiment loops for knowledge scraper tuning |
 | `context-optimization` | `C:\ClaudeSkills\skills\context-optimization\` | Session management when context grows large (>50K tokens) |
@@ -174,6 +176,7 @@ These are prompt engineering skill files that define how Claude approaches VA-do
 
 | File | When to Load |
 |------|-------------|
+| `claude/skills/brainstorm_artifact.md` | **Before any new project, phase, feature, or major architectural decision** — scope-locking artifact gate |
 | `claude/skills/va_expert.md` | Before implementing chat handler or any VA content |
 | `claude/skills/document_reviewer.md` | Before implementing document review feature |
 | `claude/skills/document_writer.md` | Before implementing document generator |
@@ -182,3 +185,8 @@ These are prompt engineering skill files that define how Claude approaches VA-do
 | `claude/skills/story_builder_decision_accessibility.md` | Before implementing community stories, decision letter explainer, or any accessibility work |
 | `claude/skills/auth_consent_intelligence.md` | Before implementing auth, consent engine, insight engine, or reports |
 | `claude/skills/research_agents.md` | Before implementing knowledge base scraper |
+
+**Brainstorm artifact bundled resources:**
+- `claude/skills/templates/blank_brainstorm.md` — Empty template for new projects
+- `claude/skills/templates/section_archetypes.md` — Pre-built section templates (platform, game, backend, AI agent)
+- `claude/skills/examples/vetassist_reference.md` — Gold-standard completed artifact example

@@ -65,3 +65,20 @@ planning/
 
 # oh-my-claudecode local state
 .omc/
+
+# E2E generated output
+test-results/
+e2e/reports/
+
+# Agent session state and impeccable audit output
+.agents/
+
+# Task planner scratch files
+tasks/
+
+# Session backup archives
+*.zip
+
+# Personal admin docs (not project documentation)
+docs/student-pack-week1-checklist.md
+docs/artifacts/
