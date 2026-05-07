@@ -1,14 +1,20 @@
 {
   "repo": "VetAssist",
-  "auditTimestamp": "2026-05-04T07:57:21.971746+00:00",
+  "auditTimestamp": "2026-05-07T16:01:52.005918+00:00",
   "agentforgeRole": "MUSCLES",
   "integrationStatus": "STANDALONE",
   "readiness": "PARTIAL",
   "compliance": {
-    "no_polling_loops": true,
-    "polling_violations": [],
-    "no_hardcoded_values": true,
-    "hardcoded_count": 0,
+    "no_polling_loops": false,
+    "polling_violations": [
+      "C:\\Users\\daley\\Projects\\VetAssist/apps/mobile/src/hooks/useNetworkStatus.ts:4:// Purpose: React Native hook \u00e2\u20ac\u201d subscribes to NetInfo state changes (no polling).",
+      "C:\\Users\\daley\\Projects\\VetAssist/apps/mobile/src/hooks/useNetworkStatus.ts:37:    // Clean up subscription on unmount \u00e2\u20ac\u201d no polling, no leaks",
+      "C:\\Users\\daley\\Projects\\VetAssist/apps/web/src/hooks/useOfflineStatus.ts:4:// Purpose: React hook \u00e2\u20ac\u201d subscribes to browser online/offline events (no polling).",
+      "C:\\Users\\daley\\Projects\\VetAssist/apps/web/src/hooks/useOfflineStatus.ts:38:    // Clean up listeners on unmount \u00e2\u20ac\u201d no polling, no leaks",
+      "C:\\Users\\daley\\Projects\\VetAssist/packages/upload/src/EncryptedStorage.ts:106:    setInterval(() => { void this.purgeExpired(); }, PURGE_INTERVAL_MS).unref();"
+    ],
+    "no_hardcoded_values": false,
+    "hardcoded_count": 2,
     "config_file_present": true,
     "config_files": [
       "environment\\.env.example"
@@ -16,16 +22,16 @@
     "observer_pattern_used": false,
     "observer_evidence": [],
     "vram_watchdog_present": false,
-    "no_em_dashes": true,
-    "em_dash_count": 0,
+    "no_em_dashes": false,
+    "em_dash_count": 565,
     "env_example_present": false
   },
   "stats": {
     "filesScanned": 205,
-    "functionsFound": 0,
-    "openTodos": 0,
+    "functionsFound": 707,
+    "openTodos": 56,
     "testFiles": 16,
-    "prdViolations": 0,
+    "prdViolations": 572,
     "stack": [
       "TypeScript/React",
       "Node"
@@ -37,11 +43,6 @@
         "component": "OwlWatcher integration",
         "layer": "NERVOUS_SYSTEM",
         "reason": "No event bus or observer pattern detected. Required by PRD v2."
-      },
-      {
-        "component": "SESSION_HANDOFF.md",
-        "layer": "LYMPHATIC",
-        "reason": "Required by Marcus Check-In Protocol for session continuity"
       }
     ],
     "refactors_required": [],
@@ -57,8 +58,44 @@
         "reason": "Need to define what events this repo emits/consumes"
       }
     ],
-    "prd_violations": []
+    "prd_violations": [
+      {
+        "type": "POLLING_LOOP",
+        "location": "C",
+        "fix": "Replace with event listener on OwlWatcher event bus"
+      },
+      {
+        "type": "POLLING_LOOP",
+        "location": "C",
+        "fix": "Replace with event listener on OwlWatcher event bus"
+      },
+      {
+        "type": "POLLING_LOOP",
+        "location": "C",
+        "fix": "Replace with event listener on OwlWatcher event bus"
+      },
+      {
+        "type": "POLLING_LOOP",
+        "location": "C",
+        "fix": "Replace with event listener on OwlWatcher event bus"
+      },
+      {
+        "type": "POLLING_LOOP",
+        "location": "C",
+        "fix": "Replace with event listener on OwlWatcher event bus"
+      },
+      {
+        "type": "HARDCODED_VALUE",
+        "location": "C",
+        "fix": "Move to config file or .env"
+      },
+      {
+        "type": "HARDCODED_VALUE",
+        "location": "C",
+        "fix": "Move to config file or .env"
+      }
+    ]
   },
   "claudeCodeUsed": true,
-  "elapsedSeconds": 197.9
+  "elapsedSeconds": 23.8
 }

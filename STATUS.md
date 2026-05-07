@@ -4,7 +4,7 @@
 <!-- Do NOT edit manually — overwritten on each audit run -->
 
 **Repo:** VetAssist
-**Last Audit:** 2026-05-04T07:57:21.971746+00:00
+**Last Audit:** 2026-05-07T16:01:52.005918+00:00
 **AgentForge Role:** MUSCLES
 **Integration Status:** STANDALONE
 **AgentForge Readiness:** PARTIAL
@@ -16,22 +16,39 @@
 
 | Check | Result |
 |---|---|
-| No polling loops | PASS |
-| No hardcoded values | PASS |
+| No polling loops | FAIL |
+| No hardcoded values | FAIL (2 found) |
 | Config file present | PASS |
 | Observer/event pattern | FAIL |
 | VRAM watchdog | N/A |
-| No EM dashes | PASS |
+| No EM dashes | FAIL (565 found) |
 | .env.example present | FAIL |
 
 ## OPEN TODOs
-Found 0 open TODO/FIXME items.
+Found 56 open TODO/FIXME items.
+
+- add Authorization header once mobile auth token store is implemented (Task 4.x)
+- const INPUT_PLACEHOLDER = 'Ask about your VA benefits...' as const;
+- dispatch to @vetassist/ai ChatHandler via API route /api/chat
+- render message history here */}
+- placeholder={INPUT_PLACEHOLDER}
+- const INPUT_PLACEHOLDER = 'Share your experience...' as const;
+- const FEED_PLACEHOLDER = 'Community stories load here.' as const;
+- POST to /api/community/stories with PII-clean text
 
 ## AGENTFORGE GAP REPORT
 
 ### Missing Components (must build)
 - [ ] **OwlWatcher integration** [NERVOUS_SYSTEM] — No event bus or observer pattern detected. Required by PRD v2.
-- [ ] **SESSION_HANDOFF.md** [LYMPHATIC] — Required by Marcus Check-In Protocol for session continuity
+
+### PRD Violations
+- [ ] **POLLING_LOOP** in `C` — Fix: Replace with event listener on OwlWatcher event bus
+- [ ] **POLLING_LOOP** in `C` — Fix: Replace with event listener on OwlWatcher event bus
+- [ ] **POLLING_LOOP** in `C` — Fix: Replace with event listener on OwlWatcher event bus
+- [ ] **POLLING_LOOP** in `C` — Fix: Replace with event listener on OwlWatcher event bus
+- [ ] **POLLING_LOOP** in `C` — Fix: Replace with event listener on OwlWatcher event bus
+- [ ] **HARDCODED_VALUE** in `C` — Fix: Move to config file or .env
+- [ ] **HARDCODED_VALUE** in `C` — Fix: Move to config file or .env
 
 ### Config Files Needed
 - [ ] `.env.example` — Secrets template. Required per PRD v2 secrets management rule.
