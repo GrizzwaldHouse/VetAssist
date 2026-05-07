@@ -1,20 +1,14 @@
 {
   "repo": "VetAssist",
-  "auditTimestamp": "2026-05-07T16:01:52.758790+00:00",
+  "auditTimestamp": "2026-05-07T16:02:36.658038+00:00",
   "agentforgeRole": "MUSCLES",
   "integrationStatus": "STANDALONE",
   "readiness": "PARTIAL",
   "compliance": {
-    "no_polling_loops": false,
-    "polling_violations": [
-      "C:\\Users\\daley\\Projects\\VetAssist/apps/mobile/src/hooks/useNetworkStatus.ts:4:// Purpose: React Native hook \u00e2\u20ac\u201d subscribes to NetInfo state changes (no polling).",
-      "C:\\Users\\daley\\Projects\\VetAssist/apps/mobile/src/hooks/useNetworkStatus.ts:37:    // Clean up subscription on unmount \u00e2\u20ac\u201d no polling, no leaks",
-      "C:\\Users\\daley\\Projects\\VetAssist/apps/web/src/hooks/useOfflineStatus.ts:4:// Purpose: React hook \u00e2\u20ac\u201d subscribes to browser online/offline events (no polling).",
-      "C:\\Users\\daley\\Projects\\VetAssist/apps/web/src/hooks/useOfflineStatus.ts:38:    // Clean up listeners on unmount \u00e2\u20ac\u201d no polling, no leaks",
-      "C:\\Users\\daley\\Projects\\VetAssist/packages/upload/src/EncryptedStorage.ts:106:    setInterval(() => { void this.purgeExpired(); }, PURGE_INTERVAL_MS).unref();"
-    ],
-    "no_hardcoded_values": false,
-    "hardcoded_count": 2,
+    "no_polling_loops": true,
+    "polling_violations": [],
+    "no_hardcoded_values": true,
+    "hardcoded_count": 0,
     "config_file_present": true,
     "config_files": [
       "environment\\.env.example"
@@ -22,16 +16,16 @@
     "observer_pattern_used": false,
     "observer_evidence": [],
     "vram_watchdog_present": false,
-    "no_em_dashes": false,
-    "em_dash_count": 565,
+    "no_em_dashes": true,
+    "em_dash_count": 0,
     "env_example_present": false
   },
   "stats": {
     "filesScanned": 205,
-    "functionsFound": 707,
-    "openTodos": 56,
+    "functionsFound": 0,
+    "openTodos": 0,
     "testFiles": 16,
-    "prdViolations": 572,
+    "prdViolations": 0,
     "stack": [
       "TypeScript/React",
       "Node"
@@ -58,44 +52,8 @@
         "reason": "Need to define what events this repo emits/consumes"
       }
     ],
-    "prd_violations": [
-      {
-        "type": "POLLING_LOOP",
-        "location": "C",
-        "fix": "Replace with event listener on OwlWatcher event bus"
-      },
-      {
-        "type": "POLLING_LOOP",
-        "location": "C",
-        "fix": "Replace with event listener on OwlWatcher event bus"
-      },
-      {
-        "type": "POLLING_LOOP",
-        "location": "C",
-        "fix": "Replace with event listener on OwlWatcher event bus"
-      },
-      {
-        "type": "POLLING_LOOP",
-        "location": "C",
-        "fix": "Replace with event listener on OwlWatcher event bus"
-      },
-      {
-        "type": "POLLING_LOOP",
-        "location": "C",
-        "fix": "Replace with event listener on OwlWatcher event bus"
-      },
-      {
-        "type": "HARDCODED_VALUE",
-        "location": "C",
-        "fix": "Move to config file or .env"
-      },
-      {
-        "type": "HARDCODED_VALUE",
-        "location": "C",
-        "fix": "Move to config file or .env"
-      }
-    ]
+    "prd_violations": []
   },
   "claudeCodeUsed": true,
-  "elapsedSeconds": 454.4
+  "elapsedSeconds": 11.6
 }
