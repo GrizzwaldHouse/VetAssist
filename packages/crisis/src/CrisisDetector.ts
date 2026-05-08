@@ -6,7 +6,8 @@
 
 import type { CrisisResult, UserInput } from '@vetassist/shared-types';
 import { eventBus, EVENTS } from '@vetassist/events';
-import { THRESHOLDS, CRISIS_LINE } from '@vetassist/shared-config';
+import { THRESHOLDS, CRISIS_LINE, ML_PIPELINE } from '@vetassist/shared-config';
+import { MlCrisisLogService } from './MlCrisisLogService.js';
 
 // --- TIER 1: Hard regex — method + timeline combos (highest specificity, lowest false-negative risk)
 // These patterns match explicit attempt planning language veterans use.
@@ -64,18 +65,45 @@ const MEDIUM_CONFIDENCE_PHRASES: readonly string[] = [
   'worthless',
 ];
 
-// --- TIER 3: MentalRoBERTa integration point
-// Replace this stub with a real HTTP call to your self-hosted FastAPI endpoint:
-//   POST http://ml-pipeline:8001/crisis/classify
-//   Body: { text: string }
-//   Response: { level: 0|1|2|3, confidence: number }
-//   Levels: 0=indicator, 1=ideation, 2=behavior, 3=attempt
-// Run this tier only when Tier 2 confidence is in the ambiguous 0.4–0.7 range.
-async function callMentalRoBERTa(text: string): Promise<number> {
-  // STUB — returns 0 until the ML pipeline endpoint is deployed
-  // When the endpoint is live, replace this body with the fetch call above
-  void text;
-  return 0;
+// --- TIER 3: MentalRoBERTa — real HTTP call to ml-pipeline Railway service
+// Fires only in the ambiguous confidence zone where keywords are insufficient.
+// Returns level + confidence from the classifier; falls back silently on any failure.
+interface MlResponse {
+  readonly level: number;
+  readonly confidence: number;
+}
+
+async function callMentalRoBERTa(text: string): Promise<MlResponse> {
+  const url = `${ML_PIPELINE.url}${ML_PIPELINE.classifyPath}`;
+
+  const attempt = async (): Promise<MlResponse> => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), ML_PIPELINE.timeoutMs);
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+        signal: controller.signal,
+      });
+      if (!res.ok) return { level: 0, confidence: 0 };
+      const data = (await res.json()) as MlResponse;
+      return { level: data.level ?? 0, confidence: data.confidence ?? 0 };
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+
+  try {
+    return await attempt();
+  } catch {
+    try {
+      return await attempt();
+    } catch {
+      // Both attempts failed — silent fallback, Tiers 1+2 result stands
+      return { level: 0, confidence: 0 };
+    }
+  }
 }
 
 function buildCrisisResponse(): string {
@@ -106,8 +134,8 @@ function runTier2(lower: string): { confidence: number; matched: string[] } {
   for (const phrase of MEDIUM_CONFIDENCE_PHRASES) {
     if (lower.includes(phrase)) {
       matched.push(phrase);
-      // Each medium phrase raises confidence; two medium matches exceed the block threshold
-      confidence = Math.min(confidence + 0.35, 0.90);
+      // Each medium phrase raises confidence; two medium phrases land in the Tier 3 zone (0.60)
+      confidence = Math.min(confidence + 0.30, 0.90);
     }
   }
 
@@ -142,16 +170,25 @@ async function detectCrisis(text: string): Promise<CrisisResult> {
 
   // Tier 3: ambiguous range — call MentalRoBERTa for confirmation
   // Level 2+ (behavior/attempt) triggers crisis response even if phrase score was low
-  if (tier2Confidence >= 0.4) {
-    const mlLevel = await callMentalRoBERTa(text);
-    if (mlLevel >= 2) {
+  if (tier2Confidence >= THRESHOLDS.crisis.confidenceWarn) {
+    const ml = await callMentalRoBERTa(text);
+    if (ml.level >= 2) {
       return {
         isCrisis: true,
         confidence: Math.max(tier2Confidence, 0.80),
         matchedPhrases: matched,
         tier: 3,
+        mlScore: ml.confidence,
       };
     }
+    // ML ran but did not confirm crisis — return non-crisis with mlScore for audit
+    return {
+      isCrisis: false,
+      confidence: tier2Confidence,
+      matchedPhrases: matched,
+      tier: 3,
+      mlScore: ml.confidence,
+    };
   }
 
   return {
@@ -166,7 +203,7 @@ function getCrisisResponseText(): string {
   return buildCrisisResponse();
 }
 
-// Full pipeline: detect across all tiers, emit event if crisis, return result
+// Full pipeline: detect across all tiers, emit event if crisis, log corpus entry, return result
 async function detectAndEmit(input: UserInput): Promise<CrisisResult> {
   const result = await detectCrisis(input.text);
 
@@ -176,6 +213,17 @@ async function detectAndEmit(input: UserInput): Promise<CrisisResult> {
       result,
     });
   }
+
+  // Fire-and-forget corpus log — never awaited, never blocks detection
+  MlCrisisLogService.logAsync({
+    sessionId: input.sessionId,
+    rawText: input.text,
+    tier: result.tier,
+    mlScore: result.mlScore,
+    isCrisis: result.isCrisis,
+    confidence: result.confidence,
+    bannerShown: result.isCrisis,
+  });
 
   return result;
 }
