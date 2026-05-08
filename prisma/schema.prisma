@@ -1,0 +1,30 @@
+// schema.prisma
+// Developer: Marcus Daley
+// Date: 2026-05-04
+// Purpose: Prisma ORM schema for VetAssist Postgres database
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Corpus logging table for MentalRoBERTa fine-tune pipeline
+// Raw text is NEVER stored — only SHA-256 hash for privacy
+model MlCrisisLog {
+  id          String   @id @default(cuid())
+  sessionId   String
+  textHash    String
+  tier        Int
+  mlScore     Float?
+  isCrisis    Boolean
+  confidence  Float
+  bannerShown Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([createdAt])
+  @@map("ml_crisis_log")
+}

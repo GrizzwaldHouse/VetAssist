@@ -130,3 +130,60 @@ export const ANALYTICS_EVENTS = {
 } as const;
 
 export type AnalyticsEventName = typeof ANALYTICS_EVENTS[keyof typeof ANALYTICS_EVENTS];
+
+// Regulatory monitoring — eCFR / Federal Register / VA sitemap (Task 4.5)
+export const SCRAPER_CONFIG = {
+  stateDirEnvKey: 'SCRAPER_STATE_DIR',
+  lastRunFileName: 'last-run.json',
+  ecfrTitlesUrl: 'https://www.ecfr.gov/api/versioner/v1/titles.json',
+  ecfrVersionsBaseUrl: 'https://www.ecfr.gov/api/versioner/v1/versions/title-38.json',
+  federalRegisterUrl: 'https://www.federalregister.gov/api/v1/documents.json',
+  vaSitemapUrl: 'https://www.va.gov/sitemap.xml',
+  titleNumber: '38',
+  requestTimeoutMs: 25_000,
+  maxRetries: 3,
+  retryBackoffMs: 1_000,
+  frPerPage: 20,
+  relevanceAutoQueueMin: 0.7,
+  relevanceManualReviewMin: 0.3,
+  maxSeenFingerprints: 500,
+  httpUserAgent:
+    'VetAssistRegulatoryBot/1.0 (educational VA benefits resource; contact via project maintainer)',
+} as const;
+
+// Lowercase tokens — heuristic relevance for regulatory change titles/abstracts
+export const REGULATORY_RELEVANCE_KEYWORDS: readonly string[] = [
+  'veteran',
+  'va ',
+  'benefit',
+  'claim',
+  'compensation',
+  'pension',
+  '38 cfr',
+  'cfr',
+  'rating',
+  'appeal',
+  'ama',
+  'service-connected',
+  'disabilities',
+  'presumptive',
+  'm21',
+  'adjudication',
+  'disability',
+  'dic',
+  'gi bill',
+  'education',
+  'health care',
+  'board',
+  'bva',
+] as const;
+
+// ML pipeline sidecar — MentalRoBERTa FastAPI service on Railway
+export const ML_PIPELINE = {
+  url: process.env.ML_PIPELINE_URL ?? 'http://ml-pipeline:8001',
+  classifyPath: '/crisis/classify',
+  healthPath: '/health',
+  timeoutMs: 150,
+  retryCount: 1,
+  retryDelayMs: 0,
+} as const;

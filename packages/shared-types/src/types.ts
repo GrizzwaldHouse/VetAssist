@@ -64,6 +64,8 @@ export interface CrisisResult {
   readonly matchedPhrases: readonly string[];
   // Which detection tier triggered: 0=none, 1=hard-regex, 2=phrase-match, 3=MentalRoBERTa
   readonly tier: 0 | 1 | 2 | 3;
+  // Raw ML classifier confidence score — only set when Tier 3 fires
+  readonly mlScore?: number;
 }
 
 // ─── Legal Boundary ───────────────────────────────────────────────────────────
@@ -279,6 +281,56 @@ export interface CommunityPost {
   readonly moderationStatus: 'pending' | 'approved' | 'removed';
 }
 
+// ─── Regulatory monitoring (VA updates) ─────────────────────────────────────────
+
+export type RegulatoryChangeSource = 'ecfr_title_38' | 'federal_register' | 'va_sitemap';
+
+export interface FederalRegisterDocumentSummary {
+  readonly documentNumber: string;
+  readonly title: string;
+  readonly abstract: string;
+  readonly htmlUrl: string;
+  readonly publicationDate: string;
+}
+
+export interface RegulatoryReviewQueueItem {
+  readonly id: string;
+  readonly source: RegulatoryChangeSource;
+  readonly title: string;
+  readonly detailUrl: string;
+  readonly relevanceScore: number;
+  readonly relevanceTier: 'skip' | 'manual_review' | 'auto_queue';
+  readonly detectedAt: string;
+  readonly contentFingerprint: string;
+}
+
+export interface RegulatoryScraperRunSummary {
+  readonly runId: string;
+  readonly startedAt: string;
+  readonly completedAt: string;
+  readonly cfrIdentifiers: readonly string[];
+  readonly frDocuments: readonly FederalRegisterDocumentSummary[];
+  readonly reviewQueue: readonly RegulatoryReviewQueueItem[];
+  readonly staleKnowledgeSections: readonly string[];
+  // Mirrors eCFR titles.json Title 38 — lets admins spot Title 38 freshness without opening NARA
+  readonly ecfrTitle38UpToDateAsOf: string | null;
+  // Coarse sitemap stability signal from VA.gov sitemap.xml (<loc> count + byte length)
+  readonly vaSitemapFingerprint: string | null;
+}
+
+// JSON file shape under SCRAPER_STATE_DIR (script + API + CI share one contract)
+export interface RegulatoryScraperPersistedState {
+  readonly version: 1;
+  readonly watermarks: {
+    readonly lastEcfrIssueDateGte: string;
+    readonly ecfrTitle38UpToDateAsOf: string | null;
+    readonly vaSitemapFingerprint: string | null;
+    readonly lastRunCompletedAt: string | null;
+  };
+  readonly seenFingerprints: readonly string[];
+  readonly lastSummary: RegulatoryScraperRunSummary | null;
+}
+
 // ─── Event Payload Map ────────────────────────────────────────────────────────
 // Discriminated union map — all typed events in the system
 
@@ -304,6 +356,9 @@ export interface EventPayloadMap {
   ANALYTICS_CONSENT_GRANTED: { readonly sessionId: string; readonly timestamp: string };
   ANALYTICS_CONSENT_REVOKED: { readonly sessionId: string; readonly timestamp: string };
   ANALYTICS_EVENT_CAPTURED: AnalyticsEvent;
+  readonly CFR_CHANGE_DETECTED: { readonly identifiers: readonly string[]; readonly amendmentDate: string };
+  readonly FR_DOCUMENT_FOUND: FederalRegisterDocumentSummary;
+  readonly REGULATORY_SCRAPER_RUN_COMPLETED: RegulatoryScraperRunSummary;
 }
 
 export type VetAssistEvent = keyof EventPayloadMap;
