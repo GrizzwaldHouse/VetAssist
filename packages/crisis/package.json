@@ -17,6 +17,7 @@
     "test:compliance": "vitest run --reporter=verbose --passWithNoTests"
   },
   "dependencies": {
+    "@prisma/client": "*",
     "@vetassist/events": "*",
     "@vetassist/shared-config": "*",
     "@vetassist/shared-types": "*"
